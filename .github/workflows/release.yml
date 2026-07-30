@@ -99,7 +99,8 @@ jobs:
             dpkg \
             rpm \
             fuse \
-            libfuse2
+            libfuse2 \
+            libasound2-dev
 
       - name: npm ci
         working-directory: surfaces/gui
