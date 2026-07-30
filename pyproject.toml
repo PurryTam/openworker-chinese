@@ -31,9 +31,10 @@ dependencies = [
     # ships its own libpdfium — NOT PyMuPDF, whose AGPL license can't ride in the DMG).
     "pypdf>=5",
     "pypdfium2>=4",
-    # IANA tz database for zoneinfo. Windows ships no system tz db, so without this every
-    # named schedule timezone (UTC, Asia/Kolkata, …) silently falls back to local time.
-    "tzdata; sys_platform == 'win32'",
+    # IANA tz database for zoneinfo. Windows ships no system tz db; Linux may lack it in minimal
+    # containers. Without this, every named schedule timezone (UTC, Asia/Kolkata, …) silently falls
+    # back to local time.
+        "tzdata; sys_platform == 'win32' or sys_platform == 'linux'",
 ]
 
 [project.optional-dependencies]

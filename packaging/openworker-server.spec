@@ -60,8 +60,9 @@ for pkg in ("uvicorn", "certifi", "anyio", "websockets", "pypdf", "pypdfium2"):
     binaries += b
     hiddenimports += h
 
-# Windows has no system tz database; tzdata ships the zoneinfo files the scheduler needs.
-if IS_WINDOWS:
+# Windows has no system tz database; Linux minimal containers may lack it too.
+# tzdata ships the zoneinfo files the scheduler needs.
+if IS_WINDOWS or sys.platform == "linux":
     try:
         d, b, h = collect_all("tzdata")
         datas += d
