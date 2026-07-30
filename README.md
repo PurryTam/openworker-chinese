@@ -1,65 +1,98 @@
-# OpenWorker — Chinese Localization
+# OpenWorker — 中文套件
 
-*A fork of [andrewyng/openworker](https://github.com/andrewyng/openworker) that addeth the tongues of the Middle Kingdom — Simplified (简体中文) and Traditional (繁體中文) — unto the original English tongue.*
+*A fork of [andrewyng/openworker](https://github.com/andrewyng/openworker) adding **Traditional Chinese (繁體中文)** and **Simplified Chinese (简体中文)** localisation.*
 
-OpenWorker is an open-source AI coworker that dwelleth upon thy desktop and delivereth finished work, not mere converse: a polished document, a Slack reply with the numbers, an amended calendar, a triaged inbox. It runneth upon thine own machine and bindeth itself to no single model.
+OpenWorker is an open-source AI coworker that lives on your desktop and delivers finished work — not just chat: polished documents, Slack replies with numbers, amended calendars, triaged inboxes. It runs locally on your machine and is not tied to any single model.
 
-## What this edition addeth
+---
 
-This build speaketh in **three languages**, selectable at will:
+## 🎯 這個套件提供什麼
+
+此建構版內建 **三種語言**，隨時可切換：
 
 - **English**
 - **简体中文** (Simplified Chinese, `zh-Hans`)
 - **繁體中文** (Traditional Chinese, `zh-Hant`)
 
-The language is chosen thus: open **Settings → 通用 (General) → 語言 (Language)**, where three buttons are set before thee — `English` / `简体中文` / `繁體中文` — and the change taketh effect forthwith.
+切換方式：**設定 → 通用 → 語言**，三顆按鈕 `English` / `简体中文` / `繁體中文`，即時生效。
 
-Upon first launch the app discerneth thy system tongue: a Traditional-Chinese macOS (Taiwan, Hong Kong, Macau) defaulteth to 繁體中文; a Simplified one (Mainland, Singapore) to 简体中文; all else to English.
+首次啟動時會偵測系統語言：繁體中文 macOS (台灣/港/澳) 預設繁體、簡體中文 macOS (大陸/新加坡) 預設簡體、其餘預設英文。
 
-The translations abide in `surfaces/gui/src/locales/` as `zhHans.ts` and `zhHant.ts`. The key *is* the English sentence; aught untranslated falleth back to the English original, never to blank. Brand and proper nouns — *OpenWorker*, *GitHub*, *Slack*, *HubSpot*, *MCP*, `@ocw`, `@ocw-agent`, *PAT*, *OAuth* — are left verbatim in every tongue.
+翻譯檔位於 `surfaces/gui/src/locales/` 的 `zhHans.ts`、`zhHant.ts`。Key 即英文原句；未翻譯回退英文，不留空白。專有名詞 — *OpenWorker*, *GitHub*, *Slack*, *HubSpot*, *MCP*, `@ocw`, `@ocw-agent`, *PAT*, *OAuth* — 於所有語言保留原文。
 
-## Installation upon macOS
+---
 
-1. Download `OpenWorker_*.dmg` from the [Releases](../../releases) page.
-2. Open the disk image and drag *OpenWorker* into the Applications folder.
-3. At first launching, if Gatekeeper protest an unsigned build, right-click the app and choose **Open**.
-4. Launch it, then open **Settings → 通用 → 語言** and choose 简体中文 or 繁體中文.
+## 📥 快速下載 (最新 v0.1.6)
 
-## Installation upon Windows
+| 平台 | 檔案 | 大小 | 直連 |
+|------|------|------|------|
+| **macOS Apple Silicon** | `OpenWorker_0.1.6_aarch64-macOS.zip` | 66.6 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_aarch64-macOS.zip) |
+| **macOS Apple Silicon (.app.tar.gz)** | `OpenWorker_0.1.6_aarch64.app.tar.gz` | 67.3 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_aarch64.app.tar.gz) |
+| **Windows x64 (NSIS 安裝程式)** | `OpenWorker_0.1.6_x64-setup.exe` | 59.9 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_x64-setup.exe) |
+| **Windows x64 (MSI)** | `OpenWorker_0.1.6_x64_en-US.msi` | 71.6 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_x64_en-US.msi) |
 
-1. Download `OpenWorker_*_x64-setup.exe` from the [Releases](../../releases) page.
-2. Run the installer and follow the wizard; no administrator right is required (it installteth per user).
-3. If SmartScreen raise a warning, choose **More info → Run anyway**.
-4. Launch it, open **Settings → 通用 → 語言**, and choose thy tongue.
+> 💡 所有檔案亦可在 [Releases 頁面](https://github.com/PurryTam/openworker-chinese/releases) 取得。  
+> 💡 自動更新：App 內建自動檢查更新，來源指向本 repo 的 `latest.json`。
 
-## Building from source
+---
 
-The desktop shell is Tauri (Rust) wrapped about a React/TypeScript GUI; the engine is a Python sidecar.
+## 🖥️ macOS 安裝步驟
+
+1. 下載 `OpenWorker_0.1.6_aarch64-macOS.zip`  
+2. 解壓縮，將 `OpenWorker.app` 拖入「應用程式」資料夾  
+3. 首次執行若 Gatekeeper 攔截（未簽名建構），**右鍵點選 App → 開啟** → 「隱私權與安全性」選擇「仍要開啟」  
+4. 啟動後：**設定 → 通用 → 語言** 選擇 `简体中文` 或 `繁體中文`
+
+---
+
+## 🪟 Windows 安裝步驟
+
+1. 下載 `OpenWorker_0.1.6_x64-setup.exe`（建議）或 `.msi`  
+2. 執行安裝程式，依嚮導操作；無需管理員權限（逐用戶安裝）  
+3. 若 SmartScreen 提示，選 **更多資訊 → 仍要執行**  
+4. 啟動後：**設定 → 通用 → 語言** 選擇 `简体中文` 或 `繁體中文`
+
+---
+
+## 🔨 從原始碼建構
+
+桌面殼層為 Tauri (Rust) 包裝 React/TypeScript GUI；引擎為 Python sidecar。
 
 ```bash
+# macOS / Linux
 python3 -m venv .venv && .venv/bin/pip install -e '.[bedrock]' pyinstaller tzdata typer
 cd surfaces/gui && npm ci
 npm run tauri build -- --bundles app
+
+# Windows (PowerShell)
+python -m venv .venv; .venv\Scripts\pip install -e '.[bedrock]' pyinstaller tzdata typer
+cd surfaces/gui; npm ci
+npm run tauri build -- --bundles app
 ```
 
-The compiled app awaiteth in `surfaces/gui/src-tauri/target/release/bundle/`.
+建構產物位於 `surfaces/gui/src-tauri/target/release/bundle/`。
 
-## Acknowledgement
+---
 
-To Andrew Ng, and to the company he leadeth, we owe the debt —
-Whose studious mind and open hand this work in freedom set.
-Right glad were we, amid the aids that artificial wit doth lend.
-To mark this instrument that raiseth labour to its end.
-Yet sorrow'd we for China's folk, by nonlocal speech confined.
-Who, tasting not its inward worth, no entrance could they find.
-For love of learning only — with CodeBuddy and HY3 —
-Have we turned it to their own tongue, that they the freer be.
+## 🔍 專案發現性
 
-承蒙Andrew君及其團隊，深思探究，無私開源。
-幸於人工智能助手層面窺見此提升工作率之利器。
-苦華文群眾愁外文苦澀不得此器要領，無從入手。
-私僅以學術交流之目的，攜CodeBuddy與HY3譯之。
+- **上游 repo**: `andrewyng/openworker` (10.9k ⭐) — Forks 頁面可見本 repo  
+- **GitHub Topics**: `openworker`, `ai-coworker`, `chinese-localization`, `traditional-chinese`, `simplified-chinese`, `tauri`, `rust`, `python`, `desktop-app`, `macos`, `windows`  
+- **搜尋關鍵字**: `openworker chinese`、`openworker 繁體中文`、`openworker 简体中文`、`AI coworker 中文版`  
+- **Issues / Discussions**: 已啟用，歡迎回報問題或貢獻翻譯
 
-## License
+---
 
-MIT — see [LICENSE](LICENSE). The mark *OpenWorker* and the upstream code remain the property of their several authors; this edition altereth naught of the grant.
+## 🙏 致謝
+
+承蒙 Andrew Ng 及其團隊深思探究、無私開源。  
+幸於 AI 助手領域窺見此提升工作率之利器。  
+苦華文群眾愁外文苦澀不得此器要領，無從入手。  
+私僅以學術交流之目的，攜 CodeBuddy 與 HY3 譯之。
+
+---
+
+## 📄 License
+
+MIT — 見 [LICENSE](LICENSE)。  
+商標 *OpenWorker* 及上游代碼版權歸原作者所有；本套件不更改原授權條款。
