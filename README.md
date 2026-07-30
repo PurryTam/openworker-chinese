@@ -1,4 +1,4 @@
-# OpenWorker — Chinese Localisation
+# OpenWorker — Chinese Localization
 
 *A fork of [andrewyng/openworker](https://github.com/andrewyng/openworker) that addeth the tongues of the Middle Kingdom — Simplified (简体中文) and Traditional (繁體中文) — unto the original English tongue.*
 
