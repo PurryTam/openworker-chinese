@@ -3,7 +3,10 @@
 // per-tool templates. `run_shell` is the exception: its optional `description` argument is
 // model-written intent and is preferred when present. Fallback: "Used <tool> — <short args>".
 
+import i18n from "./i18n";
 import { shortArgs } from "./components/ApprovalCard";
+
+const t = i18n.t.bind(i18n);
 
 // A one-line sentence in three segments so the UI can emphasize the object:
 // "Read " + <b>runbook.md</b> + " from the shared folder".
@@ -32,7 +35,7 @@ export function humanizeTool(name: string, args: any): HumanLine {
     case "run_shell": {
       const cmd = trunc(String(a.command ?? ""), 60);
       const desc = typeof a.description === "string" && a.description.trim() ? a.description.trim() : "";
-      const pre = a.run_in_background ? "Started in the background: " : "Ran ";
+      const pre = a.run_in_background ? t("Started in the background: ") : t("Ran ");
       return {
         pre,
         obj: cmd,
@@ -40,21 +43,21 @@ export function humanizeTool(name: string, args: any): HumanLine {
       };
     }
     case "shell_task_output":
-      return { pre: "Checked on a background command" };
+      return { pre: t("Checked on a background command") };
     case "shell_task_kill":
-      return { pre: "Stopped a background command" };
+      return { pre: t("Stopped a background command") };
     case "read_file":
-      return { pre: "Read ", obj: baseName(String(a.path ?? "a file")) };
+      return { pre: t("Read "), obj: baseName(String(a.path ?? "a file")) };
     case "write_file":
-      return { pre: "Wrote ", obj: baseName(String(a.path ?? "a file")) };
+      return { pre: t("Wrote "), obj: baseName(String(a.path ?? "a file")) };
     case "replace_in_file":
     case "apply_patch":
     case "apply_unified_diff":
-      return { pre: "Edited ", obj: a.path ? baseName(String(a.path)) : "files" };
+      return { pre: t("Edited "), obj: a.path ? baseName(String(a.path)) : "files" };
     case "grep":
-      return { pre: "Searched the code for ", obj: `“${trunc(String(a.pattern ?? ""), 40)}”` };
+      return { pre: t("Searched the code for "), obj: `“${trunc(String(a.pattern ?? ""), 40)}”` };
     case "git_log":
-      return { pre: "Looked through recent git history" };
+      return { pre: t("Looked through recent git history") };
     case "todo_write": {
       // `todos` is current; `items` renders histories from before the rename (the old
       // key breaks Together's GLM-5.2 chat template — see coworker/tools/todo.py).
@@ -63,20 +66,20 @@ export function humanizeTool(name: string, args: any): HumanLine {
         const it = items[0] || {};
         const status = String(it.status || "").replace(/_/g, " ");
         return {
-          pre: "Updated the plan — ",
+          pre: t("Updated the plan — "),
           obj: `“${trunc(String(it.content ?? ""), 70)}”`,
           ...(status ? { post: ` → ${status}` } : {}),
         };
       }
-      return { pre: `Updated the plan — ${items.length} items` };
+      return { pre: t("Updated the plan — {{n}} items", { n: items.length }) };
     }
     case "send_message": {
       const { platform, tail } = messageTarget(String(a.target ?? ""));
-      if (!tail) return { pre: "Sent a message" };
-      return { pre: `Sent a ${platform} message to `, obj: tail };
+      if (!tail) return { pre: t("Sent a message") };
+      return { pre: t("Sent a {{platform}} message to ", { platform }), obj: tail };
     }
     case "web_search":
-      return { pre: "Searched the web — ", obj: `“${trunc(String(a.query ?? ""), 60)}”` };
+      return { pre: t("Searched the web — "), obj: `“${trunc(String(a.query ?? ""), 60)}”` };
     case "web_fetch": {
       let host = String(a.url ?? "");
       try {
@@ -84,19 +87,19 @@ export function humanizeTool(name: string, args: any): HumanLine {
       } catch {
         /* keep raw */
       }
-      return { pre: "Read a web page — ", obj: trunc(host, 50) };
+      return { pre: t("Read a web page — "), obj: trunc(host, 50) };
     }
     case "explore":
-      return { pre: "Sent a sub-agent to explore — ", obj: `“${trunc(String(a.task ?? a.prompt ?? ""), 60)}”` };
+      return { pre: t("Sent a sub-agent to explore — "), obj: `“${trunc(String(a.task ?? a.prompt ?? ""), 60)}”` };
     case "ask_user":
-      return { pre: "Asked you a question" };
+      return { pre: t("Asked you a question") };
     case "propose_plan":
-      return { pre: "Proposed a plan" };
+      return { pre: t("Proposed a plan") };
     case "request_directory":
-      return { pre: "Asked for folder access — ", obj: String(a.path ?? "") };
+      return { pre: t("Asked for folder access — "), obj: String(a.path ?? "") };
     default: {
       const rest = trunc(shortArgs(a), 80);
-      return { pre: `Used ${name}`, ...(rest ? { post: ` — ${rest}` } : {}) };
+      return { pre: t("Used {{name}}", { name }), ...(rest ? { post: ` — ${rest}` } : {}) };
     }
   }
 }
@@ -107,32 +110,32 @@ export function humanizeApprovalTitle(name: string, args: any): HumanLine {
   const a = args && typeof args === "object" ? args : {};
   switch (name) {
     case "write_file":
-      return { pre: "Write ", obj: baseName(String(a.path ?? "a file")) };
+      return { pre: t("Write "), obj: baseName(String(a.path ?? "a file")) };
     case "replace_in_file":
     case "apply_patch":
     case "apply_unified_diff":
-      return { pre: "Edit ", obj: a.path ? baseName(String(a.path)) : "files" };
+      return { pre: t("Edit "), obj: a.path ? baseName(String(a.path)) : "files" };
     case "run_shell": {
       const desc = typeof a.description === "string" && a.description.trim() ? a.description.trim() : "";
       return {
-        pre: "Run a command",
+        pre: t("Run a command"),
         ...(desc ? { post: ` — ${desc.charAt(0).toLowerCase()}${desc.slice(1)}` } : {}),
       };
     }
     case "send_message": {
       const { tail } = messageTarget(String(a.target ?? ""));
-      return tail ? { pre: "Send a message to ", obj: tail } : { pre: "Send a message" };
+      return tail ? { pre: t("Send a message to "), obj: tail } : { pre: t("Send a message") };
     }
     case "send_file": {
       const { tail } = messageTarget(String(a.target ?? ""));
-      return tail ? { pre: "Send a file to ", obj: tail } : { pre: "Send a file" };
+      return tail ? { pre: t("Send a file to "), obj: tail } : { pre: t("Send a file") };
     }
     case "create_scheduled_task":
       return a.title
-        ? { pre: "Create the automation ", obj: `“${trunc(String(a.title), 60)}”` }
-        : { pre: "Create an automation" };
+        ? { pre: t("Create the automation "), obj: `“${trunc(String(a.title), 60)}”` }
+        : { pre: t("Create an automation") };
     default:
-      return { pre: `Use ${name}` };
+      return { pre: t("Use {{name}}", { name }) };
   }
 }
 
@@ -141,19 +144,19 @@ export function humanizeAsk(name: string, args: any): HumanLine {
   const a = args && typeof args === "object" ? args : {};
   switch (name) {
     case "run_shell":
-      return { pre: "Wanted to run ", obj: trunc(String(a.command ?? ""), 60) };
+      return { pre: t("Wanted to run "), obj: trunc(String(a.command ?? ""), 60) };
     case "write_file":
-      return { pre: "Wanted to write ", obj: baseName(String(a.path ?? "a file")) };
+      return { pre: t("Wanted to write "), obj: baseName(String(a.path ?? "a file")) };
     case "replace_in_file":
     case "apply_patch":
     case "apply_unified_diff":
-      return { pre: "Wanted to edit ", obj: a.path ? baseName(String(a.path)) : "files" };
+      return { pre: t("Wanted to edit "), obj: a.path ? baseName(String(a.path)) : "files" };
     case "send_message": {
       const { platform, tail } = messageTarget(String(a.target ?? ""));
-      if (!tail) return { pre: "Wanted to send a message" };
-      return { pre: `Wanted to message `, obj: tail, post: ` on ${platform}` };
+      if (!tail) return { pre: t("Wanted to send a message") };
+      return { pre: t("Wanted to message "), obj: tail, post: t(" on {{platform}}", { platform }) };
     }
     default:
-      return { pre: `Wanted to use ${name}` };
+      return { pre: t("Wanted to use {{name}}", { name }) };
   }
 }

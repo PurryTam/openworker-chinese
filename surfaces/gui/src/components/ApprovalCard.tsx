@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { ApprovalDecision, Item } from "../types";
 import { humanizeApprovalTitle, type HumanLine } from "../humanize";
 import { Icon } from "./Icon";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 
 export function shortArgs(args: any): string {
   if (!args || typeof args !== "object") return "";
@@ -65,14 +67,18 @@ export function scopeNote(
   args: any,
   category?: string,
 ): { text: string; external: boolean } {
-  if (category === "connector") return { text: "acts on a connected service", external: true };
+  if (category === "connector") return { text: i18n.t("acts on a connected service"), external: true };
   if (EXTERNAL.has(name)) {
     const platform = String(args?.target ?? "").split(":")[0];
     const names: Record<string, string> = { slack: "Slack", telegram: "Telegram" };
-    return { text: `leaves this Mac → ${names[platform] || platform || "a connected chat"}`, external: true };
+    const dest = names[platform] || platform || i18n.t("a connected chat");
+    return { text: i18n.t("leaves this Mac → {{dest}}", { dest }), external: true };
   }
   const overwrite = name === "write_file" && args?.overwrite;
-  return { text: "stays on this Mac" + (overwrite ? " · overwrites the existing file" : ""), external: false };
+  return {
+    text: i18n.t("stays on this Mac") + (overwrite ? " · " + i18n.t("overwrites the existing file") : ""),
+    external: false,
+  };
 }
 
 // The proposed content/command, straight from the tool call's ARGS — the file/action
@@ -83,6 +89,7 @@ const PREVIEW_LINES = 5;
 const PREVIEW_CHARS = 420;
 
 export function PreviewBlock({ text, mono = true }: { text: string; mono?: boolean }) {
+  const { t } = useTranslation();
   const [all, setAll] = useState(false);
   const lines = text.split("\n");
   const clipped = lines.length > PREVIEW_LINES || text.length > PREVIEW_CHARS;
@@ -97,10 +104,10 @@ export function PreviewBlock({ text, mono = true }: { text: string; mono?: boole
       {clipped && (
         <button className="approval-prev-more" onClick={() => setAll((v) => !v)}>
           {all
-            ? "show less"
+            ? t("show less")
             : lines.length > PREVIEW_LINES
-              ? `show all ${lines.length} lines`
-              : "show the full message"}
+              ? t("show all {{n}} lines", { n: lines.length })
+              : t("show the full message")}
         </button>
       )}
     </div>
@@ -131,8 +138,10 @@ function Buttons({
   runTask?: { id: string; title: string } | null;
   primaryLabel: string;
 }) {
+  const { t } = useTranslation();
   const connector = item.category === "connector";
   const offerStanding = !!(runTask && item.standingTarget);
+  const verb = TOOL_VERBS[item.name] ? t(TOOL_VERBS[item.name]) : item.name;
   return (
     <div className="approval-btns">
       <button className="btn approval-primary" onClick={() => onApprove("once")}>
@@ -141,10 +150,14 @@ function Buttons({
       {offerStanding && (
         <button
           className="btn"
-          title={`Always allow ${item.name} → ${item.standingTarget} for “${runTask?.title || "this automation"}” — revoke any time on its Automations page`}
+          title={t("Always allow {{name}} → {{target}} for “{{title}}” — revoke any time on its Automations page", {
+            name: item.name,
+            target: item.standingTarget,
+            title: runTask?.title || t("this automation"),
+          })}
           onClick={() => onApprove("always_task")}
         >
-          Allow every time
+          {t("Allow every time")}
         </button>
       )}
       {/* In a run context the task-persistent grant replaces the session-scoped one —
@@ -155,20 +168,20 @@ function Buttons({
       {!connector && !offerStanding && item.name !== "run_shell" && (
         <button
           className="btn"
-          title={`Always allow ${TOOL_VERBS[item.name]?.toLowerCase() || item.name} for this session`}
+          title={t("Always allow {{v}} for this session", { v: verb })}
           onClick={() => onApprove("always_tool")}
         >
-          Always allow
+          {t("Always allow")}
         </button>
       )}
       {item.name === "run_shell" && (
         <button className="btn" onClick={() => onApprove("always_command")}>
-          Always allow this command
+          {t("Always allow this command")}
         </button>
       )}
       <span className="spacer" />
       <button className="btn quiet-deny" onClick={() => onApprove("deny")}>
-        Deny
+        {t("Deny")}
       </button>
     </div>
   );
@@ -187,6 +200,7 @@ export function ApprovalCard({
   runTask?: { id: string; title: string } | null;
   compact?: boolean;
 }) {
+  const { t } = useTranslation();
   const [peek, setPeek] = useState(false);
   const title = humanizeApprovalTitle(item.name, item.args);
   const scope = scopeNote(item.name, item.args, item.category);
@@ -206,11 +220,11 @@ export function ApprovalCard({
           <TitleText line={title} />
           {content && (
             <button className="approval-peek" onClick={() => setPeek((v) => !v)}>
-              preview {peek ? "▴" : "▾"}
+              {t("preview")} {peek ? "▴" : "▾"}
             </button>
           )}
           <span className="spacer" />
-          <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel="Allow" />
+          <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel={t("Allow")} />
         </div>
         {peek && content && <PreviewBlock text={content} />}
         {reason && <div className="approval-reason">{reason}</div>}
@@ -222,7 +236,7 @@ export function ApprovalCard({
     <div className={"approval" + (scope.external ? " approval-external" : "") + dock}>
       <div className="approval-top">
         <div className="approval-heading">
-          <span className="approval-ico" title={`Tool: ${item.name}`}>
+          <span className="approval-ico" title={t("Tool: {{name}}", { name: item.name })}>
             <Icon name="shield" size={15} />
           </span>
           <TitleText line={title} />
@@ -241,11 +255,11 @@ export function ApprovalCard({
             <span className="ico">
               <Icon name="file" size={13} />
             </span>
-            {String(item.args?.path ?? "").split("/").pop() || "file"}
-            {item.args?.as_screenshot ? " · as a PNG screenshot" : ""}
+            {String(item.args?.path ?? "").split("/").pop() || t("file")}
+            {item.args?.as_screenshot ? " · " + t("as a PNG screenshot") : ""}
           </span>
           {item.args?.comment && (
-            <MessagePreview text={String(item.args.comment)} label="With the message" />
+            <MessagePreview text={String(item.args.comment)} label={t("With the message")} />
           )}
         </>
       )}
@@ -261,9 +275,9 @@ export function ApprovalCard({
                 {g.access === "write" ? "✓" : "·"}
               </span>
               <span className="grant-line">
-                {TOOL_VERBS[g.tool] || g.tool} <code className="approval-tool">{g.target}</code>
+                {TOOL_VERBS[g.tool] ? t(TOOL_VERBS[g.tool]) : g.tool} <code className="approval-tool">{g.target}</code>
                 <span className="grant-note">
-                  {g.access === "write" ? " — always allowed once you approve" : " — read-only"}
+                  {g.access === "write" ? " — " + t("always allowed once you approve") : " — " + t("read-only")}
                 </span>
               </span>
             </div>
@@ -278,9 +292,9 @@ export function ApprovalCard({
       {reason && <div className="approval-reason">{reason}</div>}
 
       {item.resolved ? (
-        <div className="resolved">Approved: {item.resolved.replace("_", " ")}</div>
+        <div className="resolved">{t("Approved:")} {item.resolved.replace("_", " ")}</div>
       ) : (
-        <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel="Allow once" />
+        <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel={t("Allow once")} />
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { initTheme } from "./theme";
 import { platformOS } from "./tauri";
+import "./i18n";
 import "./tailwind.css";
 import "./styles.css";
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   getConnectors,
   getDmRoute,
@@ -30,6 +31,7 @@ const SELECT = "px-2.5 py-1.5 rounded-lg border border-line bg-paper text-[13px]
 const BTN_ACCENT_SM = "text-[12px] px-2.5 py-1 rounded-md bg-accent text-white disabled:opacity-50";
 
 export function InboxConfigure() {
+  const { t } = useTranslation();
   return (
     <div data-testid="inbox-configure">
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -40,10 +42,12 @@ export function InboxConfigure() {
       {/* Unrouted = delivery FAILURES ("messages that never reached you"), so it lives with
           the Inbox now (§28; previously with routing under Connectors, §26). */}
       <div className="mt-6" data-testid="unrouted-section">
-        <h3 className="text-[14px] font-semibold mb-1">Unrouted</h3>
+        <h3 className="text-[14px] font-semibold mb-1">{t("Unrouted")}</h3>
         <p className="text-[12.5px] text-muted mb-3">
-          Inbound messages and background-turn failures nothing claimed — nothing vanishes
-          silently.
+          {t(
+            "Inbound messages and background-turn failures nothing claimed — nothing vanishes " +
+              "silently.",
+          )}
         </p>
         <UnroutedTable />
       </div>
@@ -59,6 +63,7 @@ function InboxRoutingCard() {
   const [target, setTarget] = useState(""); // current default-binding address, e.g. "slack:C0123"
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const load = () => {
     getRecentChannels().then(setRecent).catch(() => setRecent([]));
@@ -72,8 +77,8 @@ function InboxRoutingCard() {
   };
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   const save = async () => {
@@ -83,7 +88,7 @@ function InboxRoutingCard() {
     const [platform, id] = addr.includes(":") ? addr.split(":", 2) : ["slack", addr];
     const result = await setInboxBinding("default", platform, id);
     if (!result.ok) {
-      setError(result.error || "Could not update Inbox routing.");
+      setError(result.error || t("Could not update Inbox routing."));
       return;
     }
     setError(null);
@@ -93,7 +98,7 @@ function InboxRoutingCard() {
   const clear = async () => {
     const result = await setInboxBinding("default", null, "");
     if (!result.ok) {
-      setError(result.error || "Could not clear Inbox routing.");
+      setError(result.error || t("Could not clear Inbox routing."));
       return;
     }
     setError(null);
@@ -123,11 +128,13 @@ function InboxRoutingCard() {
 
   return (
     <div className={CARD + " p-4"} data-testid="inbox-mirror-card">
-      <div className="font-semibold text-[13.5px] mb-1">Unattended approvals</div>
+      <div className="font-semibold text-[13.5px] mb-1">{t("Unattended approvals")}</div>
       <p className="text-[12px] text-muted mb-3">
-        Channel where an Unattended session posts Approve/Deny buttons. Currently mirroring to{" "}
+        {t(
+          "Channel where an Unattended session posts Approve/Deny buttons. Currently mirroring to ",
+        )}
         <strong className="text-ink font-medium" title={target || undefined}>
-          {known ? `#${known}` : target || "in-app Inbox only"}
+          {known ? `#${known}` : target || t("in-app Inbox only")}
         </strong>
         .
       </p>
@@ -141,17 +148,19 @@ function InboxRoutingCard() {
           disabled={!draft.trim() || missingSlackOwner}
           onClick={save}
         >
-          Set
+          {t("Set")}
         </button>
         {target && (
           <button className="text-[12px] text-danger/80 hover:text-danger" onClick={clear}>
-            clear
+            {t("clear")}
           </button>
         )}
       </div>
       {missingSlackOwner && (
         <p className="text-[11.5px] text-warnInk mt-2">
-          Choose an approval owner under Integrations → Slack before routing approvals here.
+          {t(
+            "Choose an approval owner under Integrations → Slack before routing approvals here.",
+          )}
         </p>
       )}
       {error && <p className="text-[11.5px] text-warnInk mt-2">{error}</p>}
@@ -163,6 +172,7 @@ function InboxRoutingCard() {
 function DmRouteCard() {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [dm, setDm] = useState<string>("");
+  const { t } = useTranslation();
 
   const load = () => {
     getSessions().then(setSessions).catch(() => setSessions([]));
@@ -170,8 +180,8 @@ function DmRouteCard() {
   };
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   const real = sessions.filter((s) => !s.session_id.startsWith("__"));
@@ -183,16 +193,16 @@ function DmRouteCard() {
 
   return (
     <div className={CARD + " p-4"}>
-      <div className="font-semibold text-[13.5px] mb-1">Direct messages</div>
+      <div className="font-semibold text-[13.5px] mb-1">{t("Direct messages")}</div>
       <p className="text-[12px] text-muted mb-3">
-        Session that handles DMs to the bot. With none, DMs park under Unrouted below.
+        {t("Session that handles DMs to the bot. With none, DMs park under Unrouted below.")}
       </p>
       <div className="flex items-center gap-2">
         <span className="text-muted shrink-0">
           <Icon name="chat" size={16} />
         </span>
         <select className={"flex-1 " + SELECT} value={dm} onChange={(e) => choose(e.target.value)}>
-          <option value="">No session — park DMs</option>
+          <option value="">{t("No session — park DMs")}</option>
           {real.map((s) => (
             <option key={s.session_id} value={s.session_id}>
               {s.title || s.session_id}
@@ -212,6 +222,7 @@ function SubscriptionsCard() {
   const [recent, setRecent] = useState<RecentChannel[]>([]);
   const [addSession, setAddSession] = useState("");
   const [addChannel, setAddChannel] = useState("");
+  const { t } = useTranslation();
 
   const load = () => {
     getSubscriptions().then(setSubs).catch(() => setSubs([]));
@@ -220,8 +231,8 @@ function SubscriptionsCard() {
   };
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   const real = sessions.filter((s) => !s.session_id.startsWith("__"));
@@ -242,17 +253,17 @@ function SubscriptionsCard() {
         <span className="text-muted shrink-0">
           <Icon name="plug" size={15} />
         </span>
-        <span className="font-semibold text-[13.5px]">Channel subscriptions</span>
-        <span className="text-[12px] text-muted">— sessions that listen to a channel (inbound)</span>
+        <span className="font-semibold text-[13.5px]">{t("Channel subscriptions")}</span>
+        <span className="text-[12px] text-muted">{t("— sessions that listen to a channel (inbound)")}</span>
       </div>
 
       {subs && subs.length > 0 ? (
         <table className="w-full text-[13px]">
           <thead className="text-[11px] uppercase tracking-[0.04em] text-faint">
             <tr className="text-left">
-              <th className="font-medium px-4 py-2">Session</th>
-              <th className="font-medium px-4 py-2">Listens to</th>
-              <th className="font-medium px-4 py-2">Inbox routes to</th>
+              <th className="font-medium px-4 py-2">{t("Session")}</th>
+              <th className="font-medium px-4 py-2">{t("Listens to")}</th>
+              <th className="font-medium px-4 py-2">{t("Inbox routes to")}</th>
               <th className="px-4 py-2" />
             </tr>
           </thead>
@@ -275,9 +286,11 @@ function SubscriptionsCard() {
                   {s.collision && (
                     <span
                       className="ml-1.5 text-[11px] text-warnInk bg-warnSoft/70 border border-warnInk/15 rounded px-1.5 py-0.5"
-                      title="This channel is also your Inbox-routing target — inbound and outbound on one channel conflate broadcast with request/reply."
+                      title={t(
+                        "This channel is also your Inbox-routing target — inbound and outbound on one channel conflate broadcast with request/reply.",
+                      )}
                     >
-                      ⚠ collides
+                      {t("⚠ collides")}
                     </span>
                   )}
                 </td>
@@ -297,7 +310,9 @@ function SubscriptionsCard() {
         </table>
       ) : (
         <div className="px-4 py-3 text-[12.5px] text-muted">
-          No channel subscriptions yet — add one below or ask a coworker to watch a channel.
+          {t(
+            "No channel subscriptions yet — add one below or ask a coworker to watch a channel.",
+          )}
         </div>
       )}
 
@@ -307,7 +322,7 @@ function SubscriptionsCard() {
           value={addSession}
           onChange={(e) => setAddSession(e.target.value)}
         >
-          <option value="">Choose a session…</option>
+          <option value="">{t("Choose a session…")}</option>
           {real.map((s) => (
             <option key={s.session_id} value={s.session_id}>
               {s.title || s.session_id}
@@ -316,7 +331,7 @@ function SubscriptionsCard() {
         </select>
         <ChannelPicker value={addChannel} onChange={setAddChannel} recent={recent} onSubmit={add} />
         <button className={BTN_ACCENT_SM} disabled={!addSession || !addChannel.trim()} onClick={add}>
-          + Subscribe
+          {t("+ Subscribe")}
         </button>
       </div>
     </div>
@@ -327,18 +342,19 @@ function SubscriptionsCard() {
 // and background turns that failed (e.g. a dead model). Read-only — for visibility/debugging.
 function UnroutedTable() {
   const [items, setItems] = useState<UnroutedItem[] | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const load = () => getUnrouted().then(setItems).catch(() => setItems([]));
     load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(load, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   if (items && items.length === 0)
     return (
       <div className={CARD + " p-4 text-[13px] text-muted"}>
-        Nothing here — no dropped messages or failed turns.
+        {t("Nothing here — no dropped messages or failed turns.")}
       </div>
     );
 
@@ -347,10 +363,10 @@ function UnroutedTable() {
       <table className="w-full text-[13px]">
         <thead className="text-[11px] uppercase tracking-[0.04em] text-faint">
           <tr className="text-left">
-            <th className="font-medium px-4 py-2">When</th>
-            <th className="font-medium px-4 py-2">Source</th>
-            <th className="font-medium px-4 py-2">Reason</th>
-            <th className="font-medium px-4 py-2">Message</th>
+            <th className="font-medium px-4 py-2">{t("When")}</th>
+            <th className="font-medium px-4 py-2">{t("Source")}</th>
+            <th className="font-medium px-4 py-2">{t("Reason")}</th>
+            <th className="font-medium px-4 py-2">{t("Message")}</th>
           </tr>
         </thead>
         <tbody>

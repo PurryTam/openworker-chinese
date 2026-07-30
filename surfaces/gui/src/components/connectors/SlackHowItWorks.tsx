@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { SlackWorkspace } from "../../api";
+import { useTranslation } from "react-i18next";
 
 // UX-027: the post-connect "how mentions reach you" card. A tabbed carousel of
 // animated split-scenes — Slack on the left (pinned to light-Slack colors, so it
@@ -24,6 +25,7 @@ function readCollapsed(): boolean {
 }
 
 export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [tab, setTab] = useState(0);
   const [cycle, setCycle] = useState(0); // bump = remount the scene = restart its animations
@@ -31,7 +33,7 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
 
   useEffect(() => {
     if (collapsed) return;
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       if (tourRef.current > 1) {
         tourRef.current -= 1;
         setTab((x) => (x + 1) % TABS.length);
@@ -40,7 +42,7 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
         setCycle((c) => c + 1); // keep looping the current scene quietly
       }
     }, DUR);
-    return () => window.clearTimeout(t);
+    return () => window.clearTimeout(timer);
   }, [tab, cycle, collapsed]);
 
   const jump = (i: number) => {
@@ -74,15 +76,15 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
     <div className="mb-5" data-testid="slack-howitworks">
       <div className="flex items-baseline gap-2.5">
         <h3 className="text-[13.5px] font-semibold tracking-tight">
-          Getting started with Slack &amp; OpenWorker
+          {t("Getting started with Slack & OpenWorker")}
         </h3>
         <button
           className="ml-auto shrink-0 inline-flex items-center gap-1.5 text-[12px] text-muted hover:text-ink"
           data-testid="hiw-collapse"
-          title={collapsed ? "Show how mentions work" : "Collapse — reopen anytime"}
+          title={collapsed ? t("Show how mentions work") : t("Collapse — reopen anytime")}
           onClick={toggle}
         >
-          {collapsed ? "How it works" : "Hide"}
+          {collapsed ? t("How it works") : t("Hide")}
           <span
             className="text-[9px] transition-transform"
             style={collapsed ? { transform: "rotate(-90deg)" } : undefined}
@@ -93,24 +95,24 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
       </div>
       <div className="text-[12px] text-muted mt-0.5">
         <span className="text-ok font-bold">✓ </span>
-        {ws?.account || "Workspace"} connected
+        {ws?.account || t("Workspace")} {t("connected")}
         {mine
-          ? " — you're on the People list, so your mentions get through."
-          : " — here's how mentions reach you."}
+          ? t(" — you're on the People list, so your mentions get through.")
+          : t(" — here's how mentions reach you.")}
       </div>
 
       {!collapsed && (
         <div className="mt-3">
           <div className="flex gap-1 border-b border-line mb-3">
-            {TABS.map((t, i) => (
+            {TABS.map((tabLabel, i) => (
               <button
-                key={t}
+                key={tabLabel}
                 className={"hiw-tab" + (i === tab ? " on" : "")}
                 data-testid={`hiw-tab-${i}`}
                 style={{ "--hiw-dur": `${DUR}ms` } as React.CSSProperties}
                 onClick={() => jump(i)}
               >
-                {t}
+                {t(tabLabel)}
                 <span className="hiw-prog"><i /></span>
               </button>
             ))}
@@ -122,7 +124,7 @@ export function SlackHowItWorks({ workspaces }: { workspaces: SlackWorkspace[] }
             {tab === 2 && <SceneTeammates />}
           </div>
           <div className="mt-2.5 text-[12px] text-muted" data-testid="hiw-caption">
-            {CAPTIONS[tab]}
+            {t(CAPTIONS[tab])}
           </div>
         </div>
       )}

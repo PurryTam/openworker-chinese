@@ -16,6 +16,7 @@ import { InboxItemCard } from "./InboxItemCard";
 import { InboxConfigure } from "./InboxConfigure";
 import { PanelHead } from "./IntegrationsView";
 import { shortPersonaName } from "../personaScope";
+import { useTranslation } from "react-i18next";
 
 const ICON_FOR: Record<string, "diamond" | "chat" | "code"> = {
   cowork: "diamond",
@@ -56,6 +57,7 @@ export function InboxView({
 }: {
   onOpenSession: (sessionId: string, workspace: string, agent: string) => void;
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"pending" | "configure">("pending");
   const [items, setItems] = useState<InboxItem[]>([]);
   const [personas, setPersonas] = useState<Persona[] | null>(null);
@@ -145,8 +147,8 @@ export function InboxView({
       <div className="flex-1 min-w-0 overflow-y-auto hairline-scroll">
         <div className="max-w-4xl mx-auto px-7 py-6">
           <PanelHead
-            title="Inbox"
-            sub="Approvals, questions, and notifications from your coworkers — including sessions running unattended."
+            title={t("Inbox")}
+            sub={t("Approvals, questions, and notifications from your coworkers — including sessions running unattended.")}
           />
 
           <div className="flex gap-5 border-b border-line mb-4">
@@ -161,7 +163,7 @@ export function InboxView({
                 load();
               }}
             >
-              Pending
+              {t("Pending")}
               {items.length > 0 && (
                 <span className="text-[11px] px-1.5 rounded-full bg-accentSoft text-accent leading-4">
                   {items.length}
@@ -173,7 +175,7 @@ export function InboxView({
               data-testid="inbox-tab-configure"
               onClick={() => setTab("configure")}
             >
-              Configure
+              {t("Configure")}
               {unroutedCount > 0 && (
                 <span className="text-[11px] px-1.5 rounded-full bg-warnSoft text-warnInk leading-4">
                   ⚠ {unroutedCount}
@@ -189,18 +191,17 @@ export function InboxView({
               <div className="text-[12px] text-faint -mt-1 mb-4" data-testid="inbox-routing">
                 {routing ? (
                   <span>
-                    Also delivered to{" "}
+                    {t("Also delivered to")}{" "}
                     <span className="text-muted" title={routing}>
                       {routingLabel}
                     </span>{" "}
-                    — replies there resolve items here.{" "}
+                    {t("— replies there resolve items here.")}{" "}
                   </span>
                 ) : slackConnected ? (
-                  <span>Delivered here only. </span>
+                  <span>{t("Delivered here only.")} </span>
                 ) : (
                   <span>
-                    Delivered here only. Connect Slack (Connectors page) to also get these in a
-                    channel — more platforms later.{" "}
+                    {t("Delivered here only. Connect Slack (Connectors page) to also get these in a channel — more platforms later.")}{" "}
                   </span>
                 )}
                 <button
@@ -208,14 +209,14 @@ export function InboxView({
                   data-testid="inbox-route-configure"
                   onClick={() => setTab("configure")}
                 >
-                  Configure ›
+                  {t("Configure ›")}
                 </button>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap mb-4" data-testid="inbox-filters">
-                {KIND_TABS.map((t) => (
-                  <button key={t.key} className={CHIP(kind === t.key)} onClick={() => setKind(t.key)}>
-                    {t.label}
+                {KIND_TABS.map((tt) => (
+                  <button key={tt.key} className={CHIP(kind === tt.key)} onClick={() => setKind(tt.key)}>
+                    {t(tt.label)}
                   </button>
                 ))}
                 {personasWithItems.length > 1 && (
@@ -225,7 +226,7 @@ export function InboxView({
                       className={CHIP(personaFilter === "all")}
                       onClick={() => setPersonaFilter("all")}
                     >
-                      All coworkers
+                      {t("All coworkers")}
                     </button>
                     {personasWithItems.map((p) => (
                       <button
@@ -242,7 +243,7 @@ export function InboxView({
 
               {visible.length === 0 ? (
                 <div className="manage-empty">
-                  {items.length === 0 ? "Nothing pending." : "Nothing pending for this filter."}
+                  {items.length === 0 ? t("Nothing pending.") : t("Nothing pending for this filter.")}
                 </div>
               ) : null}
 

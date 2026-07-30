@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   disconnectConnector,
   getCloudStatus,
@@ -54,6 +55,7 @@ export function ConnectorsSection() {
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [cloud, setCloud] = useState<CloudStatus | null>(null);
   const [slack, setSlack] = useState<SlackStatus | null>(null);
+  const { t } = useTranslation();
 
   const refresh = () => {
     getConnectors().then(setConnectors).catch(() => setConnectors([]));
@@ -64,8 +66,8 @@ export function ConnectorsSection() {
     refresh();
     // Poll: recent senders/parked arrive over time; sign-in + managed connects finish
     // in the system browser and surface on the next tick.
-    const t = setInterval(refresh, 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(refresh, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   if (detail) {
@@ -78,10 +80,10 @@ export function ConnectorsSection() {
           data-testid="connectors-breadcrumb"
           onClick={() => setDetail(null)}
         >
-          ‹ Connectors
+          ‹ {t("Connectors")}
         </button>
         {!c ? (
-          <div className="text-[13px] text-muted">Loading…</div>
+          <div className="text-[13px] text-muted">{t("Loading…")}</div>
         ) : !c.connected ? (
           /* Pre-connect page (§38). When a connect completes, the poll flips
              c.connected and this same route re-renders as the connected page. */
@@ -122,6 +124,7 @@ function GenericDetail({
   onChanged,
   onGone,
 }: DetailProps & { onGone: () => void }) {
+  const { t } = useTranslation();
   return (
     <div>
       <div className="flex items-center gap-3.5 mb-5">
@@ -130,7 +133,7 @@ function GenericDetail({
           <h2 className="text-[20px] font-semibold tracking-tight leading-tight">{c.title}</h2>
           <div className="text-[12.5px] text-muted flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-ok" />
-            {c.account || (c.auth === "none" ? "Built in" : "Connected")}
+            {c.account || (c.auth === "none" ? t("Built in") : t("Connected"))}
           </div>
         </div>
         {c.auth !== "none" && (
@@ -142,7 +145,7 @@ function GenericDetail({
               onGone();
             }}
           >
-            Disconnect
+            {t("Disconnect")}
           </button>
         )}
       </div>
