@@ -1190,7 +1190,7 @@ export function Sidebar(props: Props) {
                   false,
                   <span className="text-[11px] text-faint">⌘ ,</span>,
                 )}
-                {appMenuItem("clock", t("Automations"), props.onOpenScheduled, props.scheduledActive)}
+                {appMenuItem("clock", t("Your automations"), props.onOpenScheduled, props.scheduledActive)}
                 {appMenuItem("audit", t("Activity"), props.onOpenAudit, props.auditActive)}
                 {cloud?.signed_in && (
                   <>

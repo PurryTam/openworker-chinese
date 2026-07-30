@@ -123,6 +123,34 @@ fn server_log_file() -> Option<std::fs::File> {
     std::fs::File::create(&path).ok()
 }
 
+/// Build the system-tray menu with labels in the active UI language. `zh-Hans` → 简体中文,
+/// `zh-Hant` → 繁體中文, everything else → English. The brand name "OpenWorker" is intentionally
+/// preserved verbatim.
+fn build_tray_menu(app: &tauri::AppHandle, lang: &str) -> tauri::Result<Menu<tauri::Wry>> {
+    let (open_lbl, settings_lbl, quit_lbl) = if lang == "zh-Hans" {
+        ("开启 OpenWorker", "设置", "退出")
+    } else if lang == "zh-Hant" {
+        ("開啟 OpenWorker", "設定", "退出")
+    } else {
+        ("Open OpenWorker", "Settings", "Quit")
+    };
+    let open_i = MenuItem::with_id(app, "open", open_lbl, true, None::<&str>)?;
+    let settings_i = MenuItem::with_id(app, "settings", settings_lbl, true, None::<&str>)?;
+    let quit_i = MenuItem::with_id(app, "quit", quit_lbl, true, None::<&str>)?;
+    Menu::with_items(app, &[&open_i, &settings_i, &quit_i])
+}
+
+/// Update the tray menu to match the UI language chosen in Settings (frontend-driven, so the
+/// tray stays in sync with the in-app Language toggle without a restart).
+#[tauri::command]
+fn set_ui_locale(app: tauri::AppHandle, lang: String) {
+    if let Some(tray) = app.tray_by_id("main") {
+        if let Ok(menu) = build_tray_menu(&app, &lang) {
+            let _ = tray.set_menu(Some(menu));
+        }
+    }
+}
+
 fn read_keep_awake_pref() -> bool {
     std::fs::read_to_string(desktop_prefs_path())
         .ok()
@@ -622,7 +650,8 @@ pub fn run() {
             check_for_update,
             download_update,
             clear_pending_update,
-            install_update
+            install_update,
+            set_ui_locale
         ])
         .setup(move |app| {
             // 1. Start the Python server sidecar on the chosen port (inherits our env).
@@ -721,16 +750,14 @@ pub fn run() {
                 }
             });
 
-            // 3. System tray: Open / Settings / Quit.
-            let open_i = MenuItem::with_id(app, "open", "Open OpenWorker", true, None::<&str>)?;
-            let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
-            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open_i, &settings_i, &quit_i])?;
+            // 3. System tray: Open / Settings / Quit. Labels follow the UI language — the
+            //    frontend calls `set_ui_locale` on mount and whenever the Language toggle flips.
+            let menu = build_tray_menu(app.handle(), "en")?;
 
             // A monochrome template icon (black + alpha, raw RGBA 44×44) so the menu bar tints
             // it for light/dark automatically — not the full-color app icon.
             let tray_icon = tauri::image::Image::new(include_bytes!("../icons/tray.rgba"), 44, 44);
-            TrayIconBuilder::new()
+            TrayIconBuilder::with_id("main")
                 .tooltip("OpenWorker")
                 .icon(tray_icon)
                 .icon_as_template(true)

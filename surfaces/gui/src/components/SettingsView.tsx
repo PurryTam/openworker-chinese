@@ -398,7 +398,9 @@ function AppearanceSection() {
   const [autostart, setAuto] = useState(false);
   const [keepAwake, setKeep] = useState(false);
   const desktop = isTauri();
-  const lang: Lang = i18n.language === "zh-Hant" ? "zh-Hant" : "en";
+  const lang: Lang = (["en", "zh-Hans", "zh-Hant"] as const).includes(i18n.language as Lang)
+    ? (i18n.language as Lang)
+    : "en";
 
   useEffect(() => {
     if (isTauri()) {
@@ -433,9 +435,9 @@ function AppearanceSection() {
       <div className={CARD + " p-4 mb-4"}>
         <div className={FIELD_LABEL}>{t("Language")}</div>
         <div className="seg mt-2.5" role="radiogroup" aria-label="Language">
-          {(["en", "zh-Hant"] as const).map((l) => (
+          {(["en", "zh-Hans", "zh-Hant"] as const).map((l) => (
             <button key={l} className={l === lang ? "active" : ""} onClick={() => setLangPref(l)}>
-              {l === "en" ? "English" : "繁體中文"}
+              {l === "en" ? "English" : l === "zh-Hans" ? "简体中文" : "繁體中文"}
             </button>
           ))}
         </div>

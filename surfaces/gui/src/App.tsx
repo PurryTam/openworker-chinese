@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { getLang, syncTrayLocale } from "./i18n";
 import {
   announceInboxUnlock,
   finalizeAutomationRun,
@@ -155,6 +156,11 @@ function fallbackWorkspace(current: string | null, projects: RecentWorkspace[]):
 
 export function App() {
   const { t } = useTranslation();
+  // Push the active UI language to the Rust/Tauri shell (system-tray menu) on startup so the
+  // tray matches the in-app language — including the OS-locale default before any user toggle.
+  useEffect(() => {
+    syncTrayLocale(getLang());
+  }, []);
   const [workspace, setWorkspace] = useState<string | null>(null);
   const [branch, setBranch] = useState<string | null>(null);
   const [showGate, setShowGate] = useState(false);

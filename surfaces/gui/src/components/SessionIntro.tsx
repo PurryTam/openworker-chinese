@@ -70,7 +70,9 @@ export function SessionIntro({
         <span className="mark">✦</span> {t("What should we produce?")}
       </h1>
       <p className="intro-lede">
-        {t("Pick a task to start — I'll do the work and save the result. Or just type what you need below.")}
+        {t("Pick a task to start")}
+        <br />
+        {t("I'll do the work and save the result. Or just type what you need below.")}
       </p>
 
       <div className="intro-tasks">

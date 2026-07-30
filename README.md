@@ -116,6 +116,15 @@ Contributions and bug reports are welcome - open an [issue](https://github.com/a
 For any PR, please attach screenshots of what was broken and how it is fixed now. We will shortly add features that you can contribute to.
 Please note that we are actively developing based off a internal list and goal, so we may not approve PRs that add features that are already under-development or deviates from our vision.
 
+## 中文本地化（繁體中文 / 簡體中文）
+
+This fork adds **Traditional Chinese (繁體中文, `zh-Hant`)** and **Simplified Chinese (简体中文, `zh-Hans`)** GUI translations on top of the original English interface.
+
+- **切換語言 / Switch language：** 設定 → 通用 → 語言，提供三個選項 **English / 简体中文 / 繁體中文**，變更即時生效。
+- **自動偵測 / Auto-detect：** macOS 設為繁體（台港澳）時預設繁體，簡體（中國大陸 / 新加坡）時預設簡體，其餘預設英文。
+- **翻譯檔案 / Files：** `surfaces/gui/src/locales/zhHant.ts` 與 `zhHans.ts`。採用「key = 英文原句」策略——未翻譯的字串會回退顯示英文，絕不空白。
+- **保留原文 / Verbatim terms：** 品牌與專有名詞（OpenWorker、GitHub、Slack、HubSpot、MCP、`@ocw`、`@ocw-agent`、PAT、OAuth 等）一律保留原文，不作翻譯。
+
 ## License
 
 MIT - see [LICENSE](LICENSE).
