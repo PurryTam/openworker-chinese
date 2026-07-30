@@ -46,19 +46,19 @@ The compiled app awaiteth in `surfaces/gui/src-tauri/target/release/bundle/`.
 
 ## Acknowledgement
 
-> To Andrew Ng, and to the company he leadeth, we owe the debt —
-> Whose studious mind and open hand this work in freedom set.
-> Right glad were we, amid the aids that artificial wit doth lend.
-> To mark this instrument that raiseth labour to its end.
-> Yet sorrow'd we for China's folk, by nonlocal speech confined.
-> Who, tasting not its inward worth, no entrance could they find.
-> For love of learning only — with CodeBuddy and HY3 —
-> Have we turned it to their own tongue, that they the freer be.
+To Andrew Ng, and to the company he leadeth, we owe the debt —
+Whose studious mind and open hand this work in freedom set.
+Right glad were we, amid the aids that artificial wit doth lend.
+To mark this instrument that raiseth labour to its end.
+Yet sorrow'd we for China's folk, by nonlocal speech confined.
+Who, tasting not its inward worth, no entrance could they find.
+For love of learning only — with CodeBuddy and HY3 —
+Have we turned it to their own tongue, that they the freer be.
 
-> 承蒙Andrew君及其團隊，深思探究，無私開源。
-> 幸於人工智能助手層面窺見此提升工作率之利器。
-> 苦華文群眾愁外文苦澀不得此器要領，無從入手。
-> 私僅以學術交流之目的，攜CodeBuddy與HY3譯之。
+承蒙Andrew君及其團隊，深思探究，無私開源。
+幸於人工智能助手層面窺見此提升工作率之利器。
+苦華文群眾愁外文苦澀不得此器要領，無從入手。
+私僅以學術交流之目的，攜CodeBuddy與HY3譯之。
 
 ## License
 
