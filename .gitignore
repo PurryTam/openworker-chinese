@@ -6,3 +6,7 @@ __pycache__/
 build/
 dist/
 .coverage
+
+# Tauri updater signing keys — never commit the private key
+packaging/.updater-secret.key
+packaging/.updater-secret.key.pub

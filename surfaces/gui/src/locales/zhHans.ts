@@ -1,13 +1,9 @@
 // Simplified Chinese (zh-Hans) bundle for OpenWorker.
 //
-// Strategy (see ../i18n.ts): the translation *key* is the English source string. The `en`
-// bundle is empty, so this file maps each English UI string to its Simplified Chinese
-// rendering. Keys are flat (the English sentence itself). Strings not present here fall back
-// to the English key — never blank.
-//
-// Built by merging per-batch partials (src/locales/_partial.*.ts). To add a translation,
-// either edit this file directly or add to a partial and re-run the merge.
-const zhHant: Record<string, string> = {
+// Strategy (see ../i18n.ts): the translation *key* is the English source string. This file
+// maps each English UI string to its Simplified Chinese rendering. Keys are flat (the English
+// sentence itself). Strings not present here fall back to the English key — never blank.
+const zhHans: Record<string, string> = {
   " — here's how mentions reach you.": " — 以下是提及如何送达您的方式。",
   " — you're on the People list, so your mentions get through.": " — 您在成员清单中，因此您的提及能顺利送达。",
   " · approvals go to the Inbox": " · 批准项目会传送至收件箱",
@@ -943,4 +939,4 @@ const zhHant: Record<string, string> = {
   "Edit ": "编辑 ",
 };
 
-export default zhHant;
+export default zhHans;

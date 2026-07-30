@@ -1,12 +1,8 @@
 // Traditional Chinese (zh-Hant) bundle for OpenWorker.
 //
-// Strategy (see ../i18n.ts): the translation *key* is the English source string. The `en`
-// bundle is empty, so this file maps each English UI string to its Traditional Chinese
-// rendering. Keys are flat (the English sentence itself). Strings not present here fall back
-// to the English key — never blank.
-//
-// Built by merging per-batch partials (src/locales/_partial.*.ts). To add a translation,
-// either edit this file directly or add to a partial and re-run the merge.
+// Strategy (see ../i18n.ts): the translation *key* is the English source string. This file
+// maps each English UI string to its Traditional Chinese rendering. Keys are flat (the English
+// sentence itself). Strings not present here fall back to the English key — never blank.
 const zhHant: Record<string, string> = {
   " — here's how mentions reach you.": " — 以下是提及如何送達您的方式。",
   " — you're on the People list, so your mentions get through.": " — 您在成員清單中，因此您的提及能順利送達。",
