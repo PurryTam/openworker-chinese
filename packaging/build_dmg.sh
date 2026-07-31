@@ -152,6 +152,7 @@ fi
 # Ad-hoc sign the .app so Gatekeeper doesn't mark it as "damaged"
 # This allows users to run it after removing quarantine attribute
 # MUST be done BEFORE wrapping into DMG
+BUNDLE="$GUI/src-tauri/target/release/bundle"
 APP_PATH="$BUNDLE/macos/$APP.app"
 if [ -d "$APP_PATH" ]; then
   echo "==> [4/5] ad-hoc signing .app (allows xattr -cr to work)..."
@@ -160,7 +161,6 @@ if [ -d "$APP_PATH" ]; then
 fi
 
 echo "==> [5/5] hdiutil: wrapping into .dmg"
-BUNDLE="$GUI/src-tauri/target/release/bundle"
 STAGING="$(mktemp -d)"
 cp -R "$BUNDLE/macos/$APP.app" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
