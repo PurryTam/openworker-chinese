@@ -22,7 +22,7 @@ OpenWorker is an open-source AI coworker that lives on your desktop and delivers
 
 ---
 
-## 📥 快速下載 (最新 v0.1.10)
+## 📥 快速下載 (最新 v0.1.7)
 
 | 平台 | 檔案 | 大小 | 直連 |
 |------|------|------|------|
