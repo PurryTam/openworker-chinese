@@ -22,15 +22,15 @@ OpenWorker is an open-source AI coworker that lives on your desktop and delivers
 
 ---
 
-## 📥 快速下載 (最新 v0.1.8)
+## 📥 快速下載 (最新 v0.1.10)
 
 | 平台 | 檔案 | 大小 | 直連 |
 |------|------|------|------|
-| **macOS Apple Silicon** | `OpenWorker-macos-arm64.dmg` | 66 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-macos-arm64.dmg) |
-| **Windows x64 (NSIS 安裝程式)** | `OpenWorker-windows-setup.exe` | 57 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-windows-setup.exe) |
-| **Windows x64 (MSI)** | `OpenWorker-windows.msi` | 68 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-windows.msi) |
-| **Linux x64 (AppImage)** | `OpenWorker-linux-x64.AppImage` | 155 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-linux-x64.AppImage) |
-| **Linux x64 (deb)** | `OpenWorker-linux-x64.deb` | 91 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-linux-x64.deb) |
+| **macOS Apple Silicon** | `OpenWorker-macos-arm64.dmg` | 66 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.10/OpenWorker-macos-arm64.dmg) |
+| **Windows x64 (NSIS 安裝程式)** | `OpenWorker-windows-setup.exe` | 57 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.10/OpenWorker-windows-setup.exe) |
+| **Windows x64 (MSI)** | `OpenWorker-windows.msi` | 68 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.10/OpenWorker-windows.msi) |
+| **Linux x64 (AppImage)** | `OpenWorker-linux-x64.AppImage` | 155 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.10/OpenWorker-linux-x64.AppImage) |
+| **Linux x64 (deb)** | `OpenWorker-linux-x64.deb` | 91 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.10/OpenWorker-linux-x64.deb) |
 
 > 💡 所有檔案亦可在 [Releases 頁面](https://github.com/PurryTam/openworker-chinese/releases) 取得。  \
 > 💡 自動更新：App 內建自動檢查更新，來源指向本 repo 的 `latest.json`。
