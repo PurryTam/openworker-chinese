@@ -4,7 +4,8 @@
 #   1. PyInstaller-bundle the server into a standalone onedir folder (no venv at runtime).
 #   2. Stage it at binaries/sidecar/ for Tauri's `resources` slot (+ sign its Mach-Os).
 #   3. `tauri build --bundles app` → OpenWorker.app (resources are copied in).
-#   4. Wrap the .app in a compressed .dmg via hdiutil (reliable + headless; Tauri's own
+#   4. Ad-hoc sign the .app (allows users to run after xattr -cr)
+#   5. Wrap the .app in a compressed .dmg via hdiutil (reliable + headless; Tauri's own
 #      bundle_dmg.sh uses Finder AppleScript and fails in non-interactive sessions).
 #
 # Prerequisites (mirrors build_windows.ps1's header):
@@ -108,7 +109,7 @@ chmod +x "$GUI/src-tauri/binaries/sidecar/openworker-server"
 # Sign the sidecar's Mach-O files BEFORE tauri build: `tauri build` signs the .app (sealing
 # resources into its signature) but does NOT sign nested binaries inside resources — unsigned
 # Mach-Os there fail notarization. Hardened runtime + timestamp on every one, same identity,
-# entitlements on the executable (disable-library-validation: the bundled python dylibs carry
+# entitlements on the entrypoint (disable-library-validation: the bundled python dylibs carry
 # other Team IDs). externalBin used to get this from tauri itself.
 if [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
   echo "    signing sidecar binaries"
@@ -148,7 +149,17 @@ fi
 # under set -u on macOS's stock bash 3.2 — hit by keyless (fresh-clone) builds.
 ( cd "$GUI" && npm run tauri build -- --bundles app ${UPDATER_OVERLAY[@]+"${UPDATER_OVERLAY[@]}"} )
 
-echo "==> [4/5] hdiutil: wrapping into .dmg"
+# Ad-hoc sign the .app so Gatekeeper doesn't mark it as "damaged"
+# This allows users to run it after removing quarantine attribute
+# MUST be done BEFORE wrapping into DMG
+APP_PATH="$BUNDLE/macos/$APP.app"
+if [ -d "$APP_PATH" ]; then
+  echo "==> [4/5] ad-hoc signing .app (allows xattr -cr to work)..."
+  codesign --force --deep --sign - "$APP_PATH" --options runtime --entitlements "$GUI/src-tauri/entitlements.plist" 2>/dev/null || \
+    codesign --force --deep --sign - "$APP_PATH"
+fi
+
+echo "==> [5/5] hdiutil: wrapping into .dmg"
 BUNDLE="$GUI/src-tauri/target/release/bundle"
 STAGING="$(mktemp -d)"
 cp -R "$BUNDLE/macos/$APP.app" "$STAGING/"
@@ -223,15 +234,6 @@ if ! style_dmg; then
   hdiutil create -volname "$APP" -srcfolder "$STAGING" -ov -format UDZO "$DMG" >/dev/null
 fi
 
-# Ad-hoc sign the .app so Gatekeeper doesn't mark it as "damaged"
-# This allows users to run it after removing quarantine attribute
-APP_PATH="$BUNDLE/macos/$APP.app"
-if [ -d "$APP_PATH" ]; then
-  echo "==> [5/5] ad-hoc signing .app (allows xattr -cr to work)..."
-  codesign --force --deep --sign - "$APP_PATH" --options runtime --entitlements "$GUI/src-tauri/entitlements.plist" 2>/dev/null || \
-    codesign --force --deep --sign - "$APP_PATH"
-fi
-
 # Ad-hoc sign the DMG too
 codesign --force --sign - "$DMG" 2>/dev/null || true
 
@@ -276,7 +278,7 @@ elif [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
     echo "    (env, \$OCW_NOTARY_ENV, or $NOTARY_ENV)."
   fi
 else
-  echo "    (ad-hoc signed dev build — users run: xattr -cr /Applications/OpenWorker.app)"
+  echo "    (ad-hoc signed dev build — users run: xattr -cr /Applications/OpenWorker.app && codesign --force --deep --sign - /Applications/OpenWorker.app)"
 fi
 
 echo ""
