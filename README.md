@@ -22,35 +22,59 @@ OpenWorker is an open-source AI coworker that lives on your desktop and delivers
 
 ---
 
-## 📥 快速下載 (最新 v0.1.6)
+## 📥 快速下載 (最新 v0.1.8)
 
 | 平台 | 檔案 | 大小 | 直連 |
 |------|------|------|------|
-| **macOS Apple Silicon** | `OpenWorker_0.1.6_aarch64-macOS.zip` | 66.6 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_aarch64-macOS.zip) |
-| **macOS Apple Silicon (.app.tar.gz)** | `OpenWorker_0.1.6_aarch64.app.tar.gz` | 67.3 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_aarch64.app.tar.gz) |
-| **Windows x64 (NSIS 安裝程式)** | `OpenWorker_0.1.6_x64-setup.exe` | 59.9 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_x64-setup.exe) |
-| **Windows x64 (MSI)** | `OpenWorker_0.1.6_x64_en-US.msi` | 71.6 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.6/OpenWorker_0.1.6_x64_en-US.msi) |
+| **macOS Apple Silicon** | `OpenWorker-macos-arm64.dmg` | 66 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-macos-arm64.dmg) |
+| **Windows x64 (NSIS 安裝程式)** | `OpenWorker-windows-setup.exe` | 57 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-windows-setup.exe) |
+| **Windows x64 (MSI)** | `OpenWorker-windows.msi` | 68 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-windows.msi) |
+| **Linux x64 (AppImage)** | `OpenWorker-linux-x64.AppImage` | 155 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-linux-x64.AppImage) |
+| **Linux x64 (deb)** | `OpenWorker-linux-x64.deb` | 91 MB | [下載](https://github.com/PurryTam/openworker-chinese/releases/download/v0.1.8/OpenWorker-linux-x64.deb) |
 
-> 💡 所有檔案亦可在 [Releases 頁面](https://github.com/PurryTam/openworker-chinese/releases) 取得。  
+> 💡 所有檔案亦可在 [Releases 頁面](https://github.com/PurryTam/openworker-chinese/releases) 取得。  \
 > 💡 自動更新：App 內建自動檢查更新，來源指向本 repo 的 `latest.json`。
 
 ---
 
 ## 🖥️ macOS 安裝步驟
 
-1. 下載 `OpenWorker_0.1.6_aarch64-macOS.zip`  
-2. 解壓縮，將 `OpenWorker.app` 拖入「應用程式」資料夾  
-3. 首次執行若 Gatekeeper 攔截（未簽名建構），**右鍵點選 App → 開啟** → 「隱私權與安全性」選擇「仍要開啟」  
+1. 下載 `OpenWorker-macos-arm64.dmg`
+2. 開啟磁碟映像，將 `OpenWorker.app` 拖入「應用程式」資料夾
+3. **重要**：首次執行因無 Apple 開發者憑證（ad-hoc 簽名），請在終端機執行：
+   ```bash
+   xattr -cr /Applications/OpenWorker.app
+   codesign --force --deep --sign - /Applications/OpenWorker.app
+   ```
 4. 啟動後：**設定 → 通用 → 語言** 選擇 `简体中文` 或 `繁體中文`
+
+> 💡 原因：macOS 12+ Gatekeeper 會阻擋完全未簽名 App。ad-hoc 簽名允許用戶以終端機指令移除 quarantine 屬性後正常啟動。
 
 ---
 
 ## 🪟 Windows 安裝步驟
 
-1. 下載 `OpenWorker_0.1.6_x64-setup.exe`（建議）或 `.msi`  
-2. 執行安裝程式，依嚮導操作；無需管理員權限（逐用戶安裝）  
-3. 若 SmartScreen 提示，選 **更多資訊 → 仍要執行**  
+1. 下載 `OpenWorker-windows-setup.exe`（建議）或 `.msi`
+2. 執行安裝程式，依嚮導操作；無需管理員權限（逐用戶安裝）
+3. 若 SmartScreen 提示，選 **更多資訊 → 仍要執行**
 4. 啟動後：**設定 → 通用 → 語言** 選擇 `简体中文` 或 `繁體中文`
+
+---
+
+## 🐧 Linux 安裝步驟
+
+**AppImage（通用）：**
+```bash
+chmod +x OpenWorker-linux-x64.AppImage
+./OpenWorker-linux-x64.AppImage
+```
+
+**Debian/Ubuntu (deb)：**
+```bash
+sudo apt install ./OpenWorker-linux-x64.deb
+```
+
+啟動後：**設定 → 通用 → 語言** 選擇 `简体中文` 或 `繁體中文`
 
 ---
 
@@ -76,9 +100,9 @@ npm run tauri build -- --bundles app
 
 ## 🔍 專案發現性
 
-- **上游 repo**: `andrewyng/openworker` (10.9k ⭐) — Forks 頁面可見本 repo  
-- **GitHub Topics**: `openworker`, `ai-coworker`, `chinese-localization`, `traditional-chinese`, `simplified-chinese`, `tauri`, `rust`, `python`, `desktop-app`, `macos`, `windows`  
-- **搜尋關鍵字**: `openworker chinese`、`openworker 繁體中文`、`openworker 简体中文`、`AI coworker 中文版`  
+- **上游 repo**: `andrewyng/openworker` (10.9k ⭐) — Forks 頁面可見本 repo
+- **GitHub Topics**: `openworker`, `ai-coworker`, `chinese-localization`, `traditional-chinese`, `simplified-chinese`, `tauri`, `rust`, `python`, `desktop-app`, `macos`, `windows`, `linux`
+- **搜尋關鍵字**: `openworker chinese`、`openworker 繁體中文`、`openworker 简体中文`、`AI coworker 中文版`
 - **Issues / Discussions**: 已啟用，歡迎回報問題或貢獻翻譯
 
 ---
