@@ -222,6 +222,19 @@ if ! style_dmg; then
   echo "    (Finder styling unavailable — writing a plain .dmg)"
   hdiutil create -volname "$APP" -srcfolder "$STAGING" -ov -format UDZO "$DMG" >/dev/null
 fi
+
+# Ad-hoc sign the .app so Gatekeeper doesn't mark it as "damaged"
+# This allows users to run it after removing quarantine attribute
+APP_PATH="$BUNDLE/macos/$APP.app"
+if [ -d "$APP_PATH" ]; then
+  echo "==> [5/5] ad-hoc signing .app (allows xattr -cr to work)..."
+  codesign --force --deep --sign - "$APP_PATH" --options runtime --entitlements "$GUI/src-tauri/entitlements.plist" 2>/dev/null || \
+    codesign --force --deep --sign - "$APP_PATH"
+fi
+
+# Ad-hoc sign the DMG too
+codesign --force --sign - "$DMG" 2>/dev/null || true
+
 rm -rf "$STAGING"
 
 if [ "${OCW_SKIP_NOTARIZE:-}" = "1" ] && [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
@@ -263,7 +276,7 @@ elif [ -n "${APPLE_SIGNING_IDENTITY:-}" ]; then
     echo "    (env, \$OCW_NOTARY_ENV, or $NOTARY_ENV)."
   fi
 else
-  echo "    (unsigned dev build — set APPLE_SIGNING_IDENTITY for a distributable DMG)"
+  echo "    (ad-hoc signed dev build — users run: xattr -cr /Applications/OpenWorker.app)"
 fi
 
 echo ""
