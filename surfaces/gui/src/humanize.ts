@@ -91,6 +91,10 @@ export function humanizeTool(name: string, args: any): HumanLine {
     }
     case "explore":
       return { pre: t("Sent a sub-agent to explore — "), obj: `“${trunc(String(a.task ?? a.prompt ?? ""), 60)}”` };
+    case "load_skill":
+      // SKILLS-SPEC §4.1 #4 — the trust line: the transcript always shows the moment a
+      // skill's instructions were picked up, model-invoked or forced via /skill.
+      return { pre: t("Used skill: "), obj: String(a.name ?? "") };
     case "ask_user":
       return { pre: t("Asked you a question") };
     case "propose_plan":
@@ -134,6 +138,11 @@ export function humanizeApprovalTitle(name: string, args: any): HumanLine {
       return a.title
         ? { pre: t("Create the automation "), obj: `“${trunc(String(a.title), 60)}”` }
         : { pre: t("Create an automation") };
+    case "save_skill":
+      // SKILLS-SPEC §5.2/§7: "Add", never "install"; destination is "your skills".
+      return a.name
+        ? { pre: t("Add skill "), obj: String(a.name), post: t(" to your skills") }
+        : { pre: t("Add a skill to your skills") };
     default:
       return { pre: t("Use {{name}}", { name }) };
   }

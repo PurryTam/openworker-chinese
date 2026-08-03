@@ -82,7 +82,12 @@ from ..providers import (
 )
 from ..secrets import SecretStore, state_dir
 from ..sessions import SessionRecord
-from ..skills import SkillLoader
+from ..skills import (
+    SessionSkillStore,
+    SkillLoader,
+    SkillStore,
+    effective_skills,
+)
 
 _SCOPES = {s.value for s in Scope}
 
@@ -225,6 +230,11 @@ class SessionManager:
         self.session_connections = SessionConnectionStore(
             base / "session_connections.json"
         )
+        # Skills (SKILLS-SPEC §4): folder-backed CRUD + per-session mutes. The effective menu
+        # gates the engine's skill catalog the same way effective_connectors gates connector
+        # tools — one resolver feeds the catalog injection, the rail, and the composer popup.
+        self.skill_store = SkillStore()
+        self.session_skills = SessionSkillStore(base / "session_skills.json")
         # Dead-letter: inbound messages with no destination + background-turn failures, so neither
         # vanishes silently (a debugging/visibility surface, not a redelivery queue).
         self.unrouted = UnroutedStore(base / "unrouted.json")
@@ -275,6 +285,14 @@ class SessionManager:
             "trusted": trusted,
             "required": bool(commands and not trusted),
         }
+
+    def _mcp_workspace_trusted(self, workspace: Optional[str | Path]) -> bool:
+        """Whether workspace `.coworker/mcp.json` may be loaded (#213).
+
+        Same consent boundary as repository ``allowed_commands``: an untrusted
+        clone must not define stdio processes that spawn at session open.
+        """
+        return bool(workspace and self.workspace_trust.is_trusted(workspace))
 
     def set_workspace_trust(
         self, path: str | Path, *, trusted: bool
@@ -446,6 +464,9 @@ class SessionManager:
             routing_targets=self._routing_targets(session_id, agent),
             # Per-session connection hierarchy: expose only effective-enabled connectors' tools.
             connector_filter=self.effective_connectors(session_id, agent_name),
+            # Per-session skill menu, LIVE (SKILLS-SPEC §3): a callable so load_skill sees
+            # disables/new skills immediately; the catalog snapshot is taken at build.
+            skill_filter=lambda sid=session_id, w=ws: self.effective_skill_names(sid, w),
         )
         # An automation run rebuilt here (manual "Run now" over WS, durable resume) still
         # carries its task's standing allowances — the rules live on the task record.
@@ -460,6 +481,13 @@ class SessionManager:
             )
         if record is not None and record.grants:
             self._apply_grants(engine, record.grants)
+        # Auto-compaction (OPE-27): restore the persisted view boundary and wire the live
+        # Settings getter — post-construction, so build_engine's signature stays put.
+        if record is not None and record.compaction:
+            from ..compaction import CompactionState
+
+            engine.compaction_state = CompactionState.from_dict(record.compaction)
+        engine.compaction_settings = self.compaction_settings
         self._engines[session_id] = engine
         if is_new_session:
             self._emit_session_created(session_id, agent_name)
@@ -881,7 +909,11 @@ class SessionManager:
         loop = asyncio.get_running_loop()
         effective: Optional[set[str]] = None  # computed lazily, once
         out: list[Any] = []
-        for server in load_mcp_servers(ws, secrets=self.secrets):
+        for server in load_mcp_servers(
+            ws,
+            secrets=self.secrets,
+            workspace_trusted=self._mcp_workspace_trusted(ws),
+        ):
             if not server.enabled:
                 continue
             if server.auth == "oauth" and not mcp_oauth.has_tokens(
@@ -997,7 +1029,11 @@ class SessionManager:
         """Connect one server NOW — for OAuth servers this may open the browser and wait
         for the loopback callback, so callers run it as a background task and watch
         list_mcp for the status flip."""
-        for server in load_mcp_servers(self.default_workspace, secrets=self.secrets):
+        for server in load_mcp_servers(
+            self.default_workspace,
+            secrets=self.secrets,
+            workspace_trusted=self._mcp_workspace_trusted(self.default_workspace),
+        ):
             if server.name != name:
                 continue
             self._mcp_authorizing.add(name)
@@ -1075,7 +1111,11 @@ class SessionManager:
 
     async def mcp_tools(self, name: str) -> dict[str, Any]:
         """Connect one server and list its tools (name + description)."""
-        for server in load_mcp_servers(self.default_workspace, secrets=self.secrets):
+        for server in load_mcp_servers(
+            self.default_workspace,
+            secrets=self.secrets,
+            workspace_trusted=self._mcp_workspace_trusted(self.default_workspace),
+        ):
             if server.name == name:
                 try:
                     conn = await self.mcp.ensure(server)
@@ -1223,39 +1263,47 @@ class SessionManager:
             ".doc",
             ".docm",
         }
-        for path in root.rglob("*"):
-            try:
-                rel = path.relative_to(root)
-                if any(
-                    part.startswith(".")
-                    or part in {"node_modules", "target", "dist", "__pycache__"}
-                    for part in rel.parts
-                ):
+        # os.walk with in-place pruning, NOT rglob: rglob descends first and filters after,
+        # so a home-directory workspace walked into ~/Library and tripped the macOS App Data
+        # TCC prompt ("OpenWorker would like to access data from other apps") on every turn.
+        # Pruning here means those directories are never entered at all.
+        from ..tools.search import OS_DATA_DIRS
+
+        skip = {"node_modules", "target", "dist", "__pycache__"} | OS_DATA_DIRS
+        for dirpath, dirs, files in os.walk(root):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d not in skip]
+            for name in files:
+                if name.startswith("."):
                     continue
-                if not path.is_file() or path.suffix.lower() not in suffixes:
+                path = Path(dirpath) / name
+                if path.suffix.lower() not in suffixes:
                     continue
-                st = path.stat()
-                out.append(
-                    {
-                        "path": str(rel),
-                        # Absolute path for "Copy path" — the relative one is useless outside
-                        # the app (tester catch 2026-07-12: it copied just the filename).
-                        "abs_path": str(path),
-                        "name": path.name,
-                        "kind": _artifact_kind(path),
-                        "size": st.st_size,
-                        "modified_at": st.st_mtime,
-                    }
-                )
-            except OSError:
-                continue
+                try:
+                    st = path.stat()
+                    if not path.is_file():
+                        continue
+                    out.append(
+                        {
+                            "path": str(path.relative_to(root)),
+                            # Absolute path for "Copy path" — the relative one is useless
+                            # outside the app (tester catch 2026-07-12: it copied just the
+                            # filename).
+                            "abs_path": str(path),
+                            "name": path.name,
+                            "kind": _artifact_kind(path),
+                            "size": st.st_size,
+                            "modified_at": st.st_mtime,
+                        }
+                    )
+                except OSError:
+                    continue
         out.sort(key=lambda a: a["modified_at"], reverse=True)
         return out[:80]
 
     MAX_BINARY_PREVIEW = 25 * 1024 * 1024  # base64-over-JSON gets heavy past this
 
     def _artifact_target(
-        self, session_id: str, path: str
+        self, session_id: str, path: str, *, allow_dir: bool = False
     ) -> tuple[Optional[Path], Optional[str]]:
         """Resolve an artifact path under the session's workspace, or (None, error)."""
         record = self.session_store.load(session_id)
@@ -1268,14 +1316,36 @@ class SessionManager:
             target.relative_to(root)
         except ValueError:
             return None, "path escapes workspace"
+        if allow_dir and target.is_dir():
+            return target, None
         if not target.is_file():
-            return None, "not found"
+            return None, (
+                "This isn't in the conversation's folder anymore — it may have been "
+                "moved or deleted."
+            )
         return target, None
 
     def read_artifact(self, session_id: str, path: str) -> dict[str, Any]:
-        target, err = self._artifact_target(session_id, path)
+        # Folders are readable too (a model sometimes links a whole package, e.g. a skill
+        # build dir): return a listing the viewer can render instead of a dead end.
+        target, err = self._artifact_target(session_id, path, allow_dir=True)
         if target is None:
             return {"ok": False, "error": err}
+        if target.is_dir():
+            entries: list[dict[str, Any]] = []
+            try:
+                children = sorted(
+                    target.iterdir(), key=lambda c: (c.is_file(), c.name.lower())
+                )
+            except OSError as exc:
+                return {"ok": False, "error": str(exc)}
+            for child in children[:500]:
+                try:
+                    size = 0 if child.is_dir() else child.stat().st_size
+                except OSError:
+                    continue
+                entries.append({"name": child.name, "dir": child.is_dir(), "size": size})
+            return {"ok": True, "path": path, "kind": "folder", "entries": entries}
         kind = _artifact_kind(target)
         if kind == "office":
             # PowerPoint/Word binaries can't be previewed inline; the UI offers
@@ -1329,27 +1399,29 @@ class SessionManager:
         import subprocess
         import sys
 
-        target, err = self._artifact_target(session_id, path)
+        target, err = self._artifact_target(session_id, path, allow_dir=True)
         if target is None:
             return {"ok": False, "error": err}
+        # A folder "opens" as itself in the file manager, whatever the mode.
+        is_dir = target.is_dir()
         try:
             if sys.platform == "darwin":
                 args = (
                     ["open", "-R", str(target)]
-                    if mode == "reveal"
+                    if mode == "reveal" and not is_dir
                     else ["open", str(target)]
                 )
                 subprocess.Popen(
                     args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
             elif sys.platform == "win32":
-                if mode == "reveal":
+                if mode == "reveal" and not is_dir:
                     # Explorer wants the path glued to the switch: /select,<path>
                     subprocess.Popen(["explorer", f"/select,{target}"])
                 else:
                     os.startfile(str(target))  # type: ignore[attr-defined]  # open in default app
             else:  # Linux/BSD
-                tgt = str(target.parent) if mode == "reveal" else str(target)
+                tgt = str(target.parent) if mode == "reveal" and not is_dir else str(target)
                 subprocess.Popen(
                     ["xdg-open", tgt],
                     stdout=subprocess.DEVNULL,
@@ -1778,12 +1850,14 @@ class SessionManager:
             "surfaces": self._surfaces(),
             "nav_layout": self._nav_layout(),
             "sessions_peek": self.sessions_peek(),
+            "context_bar": self.context_bar(),
             "scratch_base": self._prefs.get("scratch_base")
             or self.DEFAULT_SCRATCH_BASE,
             # Real on-disk secrets location, so the UI shows the OS-native path instead of a
             # hardcoded POSIX one (Windows -> %APPDATA%\coworker, macOS/Linux -> ~/.config).
             "secrets_path": str(self.secrets.path),
             **self.pdf_settings(),
+            **self.compaction_settings_payload(),
         }
 
     def _surfaces(self) -> dict[str, bool]:
@@ -1836,6 +1910,16 @@ class SessionManager:
         self._save_prefs()
         return {"ok": True, "sessions_peek": self.sessions_peek()}
 
+    def context_bar(self) -> bool:
+        """Whether the composer shows the context-window fill bar. OFF by default (owner
+        ask): the chip then states the session total, and the popover keeps both numbers."""
+        return bool(self._prefs.get("context_bar", False))
+
+    def set_context_bar(self, shown: Any) -> dict[str, Any]:
+        self._prefs["context_bar"] = bool(shown)
+        self._save_prefs()
+        return {"ok": True, "context_bar": self.context_bar()}
+
     # -- PDF attachments / token savings (owner ask, 2026-07-17) ----------------
     DEFAULT_PDF_MAX_PAGES = 20
     DEFAULT_PDF_MAX_MB = 10
@@ -1859,6 +1943,65 @@ class SessionManager:
             "pdf_max_pages": max(1, min(pages, 100)),
             "pdf_max_mb": max(1, min(mb, 10)),
         }
+
+    def compaction_settings(self) -> dict[str, Any]:
+        """The live auto-compaction knobs (OPE-27) — read by every engine per check, so a
+        Settings change applies without a rebuild. Only the two spec'd overrides plus the
+        summarizer-model pin; absent keys fall back to compaction.py defaults."""
+        from ..compaction import DEFAULT_CAP_TOKENS, DEFAULT_THRESHOLD_PCT
+
+        return {
+            "threshold_pct": float(
+                self._prefs.get("compaction_threshold_pct") or DEFAULT_THRESHOLD_PCT
+            ),
+            "cap_tokens": int(
+                self._prefs.get("compaction_cap_tokens") or DEFAULT_CAP_TOKENS
+            ),
+            # "" → the session's own model (engine falls back to self.model).
+            "model": str(self._prefs.get("compaction_model") or ""),
+        }
+
+    def compaction_settings_payload(self) -> dict[str, Any]:
+        """The same knobs under REST-facing names (prefixed to keep /v1/settings flat)."""
+        settings = self.compaction_settings()
+        return {
+            "compaction_threshold_pct": settings["threshold_pct"],
+            "compaction_cap_tokens": settings["cap_tokens"],
+            "compaction_model": settings["model"],
+        }
+
+    def set_compaction_settings(
+        self,
+        threshold_pct: Any = None,
+        cap_tokens: Any = None,
+        model: Any = None,
+    ) -> dict[str, Any]:
+        """Persist the auto-compaction overrides (OPE-27). Threshold is a percentage of
+        the model's context window (10–95); the cap is an absolute token ceiling; model
+        pins the summarizer ('' → the session's own model). Engines read these live via
+        `compaction_settings()`, so changes apply to running sessions immediately."""
+        if threshold_pct is not None:
+            try:
+                pct = float(threshold_pct)
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "compaction_threshold_pct must be a number"}
+            if not 0.10 <= pct <= 0.95:
+                return {
+                    "ok": False,
+                    "error": "compaction_threshold_pct must be between 0.10 and 0.95",
+                }
+            self._prefs["compaction_threshold_pct"] = pct
+        if cap_tokens is not None:
+            try:
+                self._prefs["compaction_cap_tokens"] = max(
+                    10_000, min(int(cap_tokens), 2_000_000)
+                )
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "compaction_cap_tokens must be a number"}
+        if model is not None:
+            self._prefs["compaction_model"] = str(model)
+        self._save_prefs()
+        return {"ok": True, **self.compaction_settings()}
 
     def set_pdf_settings(
         self,
@@ -2594,6 +2737,9 @@ class SessionManager:
             # Scheduled runs respect the same per-session connection hierarchy as live sessions:
             # expose only the persona's effective-enabled connectors' tools (§4.3).
             connector_filter=self.effective_connectors(session_id, task.agent),
+            skill_filter=lambda sid=session_id, w=task.workspace: (
+                self.effective_skill_names(sid, w)
+            ),
         )
         self._seed_task_permissions(engine, task)
         return engine
@@ -3249,6 +3395,11 @@ class SessionManager:
                 agent=getattr(engine, "agent_name", "code"),
                 extra_roots=self._extra_roots_of(engine),
                 grants=_grants_of(engine),
+                compaction=(
+                    engine.compaction_state.as_dict()
+                    if getattr(engine, "compaction_state", None)
+                    else {}
+                ),
             )
         )
 
@@ -3572,6 +3723,8 @@ class SessionManager:
         self.mention_sessions.remove_session(session_id)
         # ...and drops its per-session connector overrides (§4.2, like subscriptions).
         self.session_connections.remove_session(session_id)
+        # ...and its per-session skill mutes (SKILLS-SPEC §3 — mutes die with the session).
+        self.session_skills.remove_session(session_id)
         # ...and closes its pending Inbox items — an orphaned approval/question can never be
         # meaningfully answered (owner call, 2026-07-03).
         self.inbox.resolve_session(session_id)
@@ -3647,9 +3800,173 @@ class SessionManager:
     def list_agents(self) -> list[dict[str, Any]]:
         return _list_agents()
 
-    def list_skills(self) -> list[dict[str, Any]]:
-        loader = SkillLoader([state_dir() / "skills"])
-        return loader.catalog()
+    # -- skills (SKILLS-SPEC §4.4) ------------------------------------------------
+    def list_skills(self, workspace: Optional[str] = None) -> list[dict[str, Any]]:
+        """Enriched rows for the Settings screen (scope/source/enabled). Optional workspace
+        adds that project's skills, with project copies shadowing same-named global ones."""
+        return self.skill_store.rows(workspace or None)
+
+    def reveal_skill(
+        self, name: str, workspace: Optional[str] = None
+    ) -> dict[str, Any]:
+        """Open the skill's folder in the OS file manager (§6 "Show folder" — the power-user
+        window into folder-is-truth). Same local-machine rationale as reveal_artifact."""
+        import subprocess
+        import sys
+
+        try:
+            folder, _scope = self.skill_store.find(name, workspace or None)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        try:
+            if sys.platform == "darwin":
+                subprocess.Popen(
+                    ["open", str(folder)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            elif sys.platform == "win32":
+                import os
+
+                os.startfile(str(folder))  # type: ignore[attr-defined]
+            else:
+                subprocess.Popen(
+                    ["xdg-open", str(folder)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+        except OSError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True}
+
+    def effective_skill_names(
+        self, session_id: str, workspace: Optional[str | Path] = None
+    ) -> set[str]:
+        """The session's skill menu (§3): merged scopes − Settings disables − session mutes.
+        The single resolver behind the engine catalog, the rail list, and the composer popup."""
+        dirs = [self.skill_store.global_dir]
+        if workspace:
+            dirs.append(self.skill_store.project_dir(workspace))
+        loader = SkillLoader(dirs)
+        return effective_skills(
+            names=set(loader.names()),
+            disabled=self.skill_store.disabled_names(),
+            session_overrides=self.session_skills.get(session_id),
+        )
+
+    def session_skills_view(
+        self, session_id: str, workspace: Optional[str] = None
+    ) -> dict[str, Any]:
+        """The rail payload: every in-scope, Settings-enabled skill with its mute state."""
+        disabled = self.skill_store.disabled_names()
+        overrides = self.session_skills.get(session_id)
+        rows = [
+            {
+                "name": r["name"],
+                "description": r["description"],
+                "scope": r["scope"],
+                "enabled": overrides.get(r["name"], True),
+            }
+            for r in self.skill_store.rows(workspace or None)
+            if r["name"] not in disabled
+        ]
+        return {"skills": rows}
+
+    def _scratch_workspace_error(self, workspace: Any) -> Optional[dict[str, Any]]:
+        """Refuse skill WRITES into a per-conversation scratch dir — a skill saved there is
+        stranded in a throwaway folder. Backend chokepoint: guards every entry path (UI,
+        REST, future import), not just the flows the GUI happens to gate."""
+        if not workspace:
+            return None
+        try:
+            ws = Path(str(workspace)).expanduser().resolve()
+            if ws.is_relative_to(self.scratch_base().resolve()):
+                return {
+                    "ok": False,
+                    "error": (
+                        "That folder is a temporary session space — skills saved there "
+                        "would be lost. Save it globally or pick a real project."
+                    ),
+                }
+        except OSError:
+            pass
+        return None
+
+    def create_skill(self, body: dict[str, Any]) -> dict[str, Any]:
+        blocked = self._scratch_workspace_error(body.get("workspace"))
+        if blocked:
+            return blocked
+        try:
+            created = self.skill_store.create(
+                name=str(body.get("name", "")),
+                description=str(body.get("description", "")),
+                instructions=str(body.get("instructions", "")),
+                scope=str(body.get("scope", "global") or "global"),
+                workspace=body.get("workspace") or None,
+            )
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "skill": created}
+
+    def update_skill(self, name: str, body: dict[str, Any]) -> dict[str, Any]:
+        try:
+            if "enabled" in body:
+                self.skill_store.set_enabled(name, bool(body["enabled"]))
+            if body.get("description") is not None or body.get("instructions") is not None:
+                self.skill_store.update(
+                    name,
+                    description=body.get("description"),
+                    instructions=body.get("instructions"),
+                    workspace=body.get("workspace") or None,
+                )
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True}
+
+    def delete_skill(self, name: str, workspace: Optional[str] = None) -> dict[str, Any]:
+        try:
+            self.skill_store.delete(name, workspace or None)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True}
+
+    def move_skill(self, name: str, body: dict[str, Any]) -> dict[str, Any]:
+        # Moving INTO project scope must not target a scratch dir (moving OUT is fine —
+        # that's the rescue path for already-stranded skills).
+        if str(body.get("scope", "")) == "project":
+            blocked = self._scratch_workspace_error(body.get("workspace"))
+            if blocked:
+                return blocked
+        try:
+            moved = self.skill_store.move(
+                name,
+                to_scope=str(body.get("scope", "")),
+                workspace=body.get("workspace") or None,
+            )
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "skill": moved}
+
+    def stage_skill_upload(self, data: bytes, filename: str = "") -> dict[str, Any]:
+        try:
+            preview = self.skill_store.stage_upload(data, filename)
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, **preview}
+
+    def confirm_skill_upload(self, body: dict[str, Any]) -> dict[str, Any]:
+        blocked = self._scratch_workspace_error(body.get("workspace"))
+        if blocked:
+            return blocked
+        try:
+            saved = self.skill_store.confirm_upload(
+                str(body.get("token", "")),
+                scope=str(body.get("scope", "global") or "global"),
+                workspace=body.get("workspace") or None,
+            )
+        except ValueError as exc:
+            return {"ok": False, "error": str(exc)}
+        return {"ok": True, "skill": saved}
 
     def list_memory(self) -> list[dict[str, Any]]:
         return [

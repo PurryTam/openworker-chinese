@@ -1,7 +1,13 @@
 import { useState, type ReactNode } from "react";
 import type { InboxItem } from "../api";
 import { humanizeApprovalTitle } from "../humanize";
-import { PreviewBlock, scopeNote, TitleText } from "./ApprovalCard";
+import {
+  approvalActionLabels,
+  PreviewBlock,
+  SaveSkillPreview,
+  scopeNote,
+  TitleText,
+} from "./ApprovalCard";
 import { useTranslation } from "react-i18next";
 
 // One Inbox item, rendered identically in the Inbox list and inline in its own session view
@@ -90,7 +96,10 @@ export function InboxItemCard({
           <div className="text-[15px] font-semibold mt-0.5 leading-snug">{item.title}</div>
         </>
       )}
-      {item.kind === "approval" && item.data?.tool && typeof item.data.arguments?.content === "string" ? (
+      {item.kind === "approval" && item.data?.tool === "save_skill" ? (
+        // Parked skill proposals wear the same review surface as the live card (§5.2).
+        <SaveSkillPreview args={item.data.arguments} />
+      ) : item.kind === "approval" && item.data?.tool && typeof item.data.arguments?.content === "string" ? (
         <PreviewBlock text={item.data.arguments.content} />
       ) : item.kind === "approval" && item.data?.tool && typeof item.data.arguments?.command === "string" ? (
         <PreviewBlock text={item.data.arguments.command} />
@@ -125,7 +134,7 @@ export function InboxItemCard({
             className={item.data?.tool ? BTN_QUIET : BTN_BORDERED}
             onClick={() => onResolve(item.id, "deny")}
           >
-            {t("Deny")}
+            {item.data?.tool ? t("Deny") : t("Deny")}
           </button>
         </div>
       ) : item.kind === "question" ? (
