@@ -245,6 +245,7 @@ export function ApprovalCard({
   compact?: boolean;
 }) {
   const { t } = useTranslation();
+  const labels = approvalActionLabels(item.name);
   const [peek, setPeek] = useState(false);
   const title = humanizeApprovalTitle(item.name, item.args);
   const scope = scopeNote(item.name, item.args, item.category);
@@ -268,7 +269,7 @@ export function ApprovalCard({
             </button>
           )}
           <span className="spacer" />
-          <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel={t("Allow")} />
+          <Buttons item={item} onApprove={onApprove} runTask={runTask} primaryLabel={labels.allow} />
         </div>
         {peek && content && <PreviewBlock text={content} />}
         {reason && <div className="approval-reason">{reason}</div>}
@@ -344,8 +345,8 @@ export function ApprovalCard({
           item={item}
           onApprove={onApprove}
           runTask={runTask}
-          primaryLabel={primaryLabel}
-          denyLabel={approvalActionLabels(item.name).deny}
+          primaryLabel={labels.allow}
+          denyLabel={labels.deny}
         />
       )}
     </div>
