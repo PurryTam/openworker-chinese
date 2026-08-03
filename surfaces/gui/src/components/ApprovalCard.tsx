@@ -344,7 +344,7 @@ export function ApprovalCard({
           item={item}
           onApprove={onApprove}
           runTask={runTask}
-          primaryLabel={t("Allow once")}
+          primaryLabel={primaryLabel}
           denyLabel={approvalActionLabels(item.name).deny}
         />
       )}
