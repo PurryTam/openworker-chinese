@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
   cloudLogin,
   connectManaged,
@@ -44,7 +43,6 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
   // -- step 1: model (provider gallery ⇄ key form, shared machinery) ---------------
   const ps = useProviderSetup();
   const [skipConfirm, setSkipConfirm] = useState(false);
-  const { t } = useTranslation();
 
   const anyReady =
     ps.providers.some((p) => p.configured && p.needs_key) || ps.keylessOk.size > 0;
@@ -78,8 +76,8 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
     };
     load();
     const fast = signinPhase === "waiting" || pendingTool !== null;
-    const timer = setInterval(load, fast ? 750 : 3000);
-    return () => clearInterval(timer);
+    const t = setInterval(load, fast ? 750 : 3000);
+    return () => clearInterval(t);
   }, [step, signinPhase, pendingTool]);
 
   // The poll flips the card to ✓ when the consent lands.
@@ -121,12 +119,10 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
         {step === 0 && (
           <section data-testid="ob-step-model" className="flex-1 min-h-0 flex flex-col">
             {/* Persistent header — stays put while the region below swaps (§39). */}
-            <h1 className="text-[19px] font-semibold">{t("Welcome to OpenWorker")}<span className="beta-tag">{t("BETA")}</span></h1>
+            <h1 className="text-[19px] font-semibold">Welcome to OpenWorker<span className="beta-tag">BETA</span></h1>
             <p className="text-[13px] text-muted mt-0.5 mb-4">
-              {t(
-                "Pick a model provider to get started — OpenWorker runs on your own key, and your " +
-                  "key and your data stay on this Mac.",
-              )}
+              Pick a model provider to get started — OpenWorker runs on your own key, and your
+              key and your data stay on this computer.
             </p>
 
             {!ps.sel ? (
@@ -145,13 +141,13 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
             <div className="flex items-center gap-3 pt-5">
               {!skipConfirm ? (
                 <button className="text-[12.5px] text-faint hover:text-muted" onClick={() => setSkipConfirm(true)}>
-                  {t("Skip setup")}
+                  Skip setup
                 </button>
               ) : (
                 <span className="text-[12.5px] text-muted">
-                  {t("Nothing works without a model —")}{" "}
+                  Nothing works without a model —{" "}
                   <button className="text-accent" onClick={() => finish()}>
-                    {t("skip anyway")}
+                    skip anyway
                   </button>
                 </span>
               )}
@@ -161,11 +157,11 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 onClick={advance}
                 data-testid="ob-continue"
               >
-                {ps.verify.state === "testing" ? t("Checking…") : t("Next")}
+                {ps.verify.state === "testing" ? "Checking…" : "Next"}
               </button>
             </div>
             <p className="text-[11px] text-faint mt-3">
-              {t("Models can be enabled or hidden anytime in Settings ▸ Models.")}
+              Models can be enabled or hidden anytime in Settings ▸ Models.
             </p>
           </section>
         )}
@@ -177,9 +173,9 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
              slot keeps its place but flips to a green congrats, and every row grows a quiet
              Connect pill. The gated Google pair is ONE combined grayed row. */
           <section data-testid="ob-step-tools" className="flex-1 min-h-0 flex flex-col">
-            <h1 className="text-[19px] font-semibold">{t("Connect your everyday tools")}</h1>
+            <h1 className="text-[19px] font-semibold">Connect your everyday tools</h1>
             <p className="text-[13px] text-muted mt-0.5 mb-3">
-              {t("Chat can only advise. Connected, your coworker does the actual work:")}
+              Chat can only advise. Connected, your coworker does the actual work:
             </p>
 
             <div className="flex-1 min-h-0 overflow-y-auto pr-1" data-testid="ob-tool-gallery">
@@ -194,20 +190,20 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                   >
                     <ConnectorBadge connector={c} size={34} title={c.title} />
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-semibold leading-tight">{t(benefit)}</span>
-                      <span className="block text-[12px] text-muted truncate">{t(detail)}</span>
+                      <span className="block text-[13.5px] font-semibold leading-tight">{benefit}</span>
+                      <span className="block text-[12px] text-muted truncate">{detail}</span>
                     </span>
                     {cloud?.signed_in &&
                       (c.connected ? (
-                        <span className="text-[12px] text-ok font-medium shrink-0">{t("✓ Connected")}</span>
+                        <span className="text-[12px] text-ok font-medium shrink-0">✓ Connected</span>
                       ) : pendingTool === name ? (
-                        <span className="text-[12px] text-muted shrink-0">{t("Check your browser…")}</span>
+                        <span className="text-[12px] text-muted shrink-0">Check your browser…</span>
                       ) : (
                         <button
                           className="shrink-0 rounded-full border border-line px-4 py-1.5 text-[12.5px] font-medium hover:border-lineStrong"
                           onClick={() => startTool(name)}
                         >
-                          {t("Connect")}
+                          Connect
                         </button>
                       ))}
                   </div>
@@ -223,13 +219,13 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 </span>
                 <span className="min-w-0 flex-1">
                 <span className="block text-[13.5px] font-semibold leading-tight text-faint">
-                  {t("Gmail & Google Calendar")}
+                    Gmail & Google Calendar
+                  </span>
+                  <span className="block text-[12px] text-faint truncate">
+                    Coming soon — pending Google’s app verification.
+                  </span>
                 </span>
-                <span className="block text-[12px] text-faint truncate">
-                  {t("Coming soon — pending Google’s app verification.")}
-                </span>
-                </span>
-                {cloud?.signed_in && <span className="text-[11.5px] text-faint shrink-0">{t("Coming soon")}</span>}
+                {cloud?.signed_in && <span className="text-[11.5px] text-faint shrink-0">Coming soon</span>}
               </div>
             </div>
 
@@ -240,27 +236,25 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
               <div className="mt-3.5 rounded-xl border border-line bg-paper px-4 py-3 flex items-center gap-3.5 shrink-0">
                 <span className="flex-1 text-[12.5px] text-muted leading-snug">
                   <span className="block text-[13px] font-semibold text-ink mb-0.5">
-                    {t("Sign in for one-click connections")}
+                    Sign in for one-click connections
                   </span>
-                  {t(
-                    "OpenWorker handles the OAuth for 20+ tools — no dev consoles, no pasted keys. " +
-                      "Tokens stay on this Mac.",
-                  )}
+                  OpenWorker handles the OAuth for 20+ tools — no dev consoles, no pasted keys.
+                  Tokens stay on this computer.
                 </span>
                 {signinPhase ? (
                   <span className="inline-flex items-center gap-2 text-[12.5px] text-muted shrink-0">
                     <Spinner />
                     {signinPhase === "opening" ? (
-                      t("Opening browser…")
+                      "Opening browser…"
                     ) : (
                       <>
-                        {t("Waiting…")}{" "}
+                        Waiting…{" "}
                         <button
                           className="underline hover:text-ink"
                           onClick={() => setSigninPhase(null)}
                           data-testid="ob-signin-cancel"
                         >
-                          {t("Cancel")}
+                          Cancel
                         </button>
                       </>
                     )}
@@ -275,7 +269,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                     }}
                     data-testid="ob-cloud-signin"
                   >
-                    {t("Sign in")}
+                    Sign in
                   </button>
                 )}
               </div>
@@ -285,13 +279,11 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 data-testid="ob-tools-signedin"
               >
                 <span className="block text-[13px] font-semibold text-ok mb-0.5">
-                  {t("🎉 You’re signed in")}{cloud.account ? ` as ${cloud.account}` : ""}
+                  🎉 You’re signed in{cloud.account ? ` as ${cloud.account}` : ""}
                 </span>
                 <span className="block text-[12.5px] text-muted">
-                  {t(
-                    "Connect a tool above with one click — or add them anytime later from the " +
-                      "Connectors page.",
-                  )}
+                  Connect a tool above with one click — or add them anytime later from the
+                  Connectors page.
                 </span>
               </div>
             )}
@@ -304,7 +296,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                   onClick={() => setStep(2)}
                   data-testid="ob-continue-tools"
                 >
-                  {t("Next")}
+                  Next
                 </button>
               ) : (
                 <button
@@ -312,15 +304,13 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                   onClick={() => setStep(2)}
                   data-testid="ob-tools-skip"
                 >
-                  {t("Continue without sign-in")}
+                  Continue without sign-in
                 </button>
               )}
             </div>
             <p className="text-[11px] text-faint mt-3">
-{t(
-                "30+ more tools on the Connectors page — add or remove anytime. Tokens stay on " +
-                  "this Mac.",
-              )}
+              30+ more tools on the Connectors page — add or remove anytime. Tokens stay on
+              this computer.
             </p>
           </section>
         )}
@@ -331,8 +321,8 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
               <div className="w-12 h-12 rounded-full bg-okSoft text-ok grid place-items-center mx-auto mb-3 text-[22px]">
                 ✓
               </div>
-              <h1 className="text-[19px] font-semibold mb-1">{t("You're set up")}</h1>
-              <p className="text-[13px] text-muted mb-5">{t("Two good ways to start:")}</p>
+              <h1 className="text-[19px] font-semibold mb-1">You're set up</h1>
+              <p className="text-[13px] text-muted mb-5">Two good ways to start:</p>
             </div>
 
             <button
@@ -344,11 +334,9 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 ◷
               </span>
               <span className="flex-1 min-w-0 text-left">
-                <b className="block text-[13.5px]">{t("Create your first automation")}</b>
+                <b className="block text-[13.5px]">Create your first automation</b>
                 <span className="text-[12px] text-muted">
-                  {t(
-                    "A weekly digest, a morning brief — pick a template, running in two minutes.",
-                  )}
+                  A weekly digest, a morning brief — pick a template, running in two minutes.
                 </span>
               </span>
               <span className="text-faint self-center">›</span>
@@ -362,11 +350,9 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 ✦
               </span>
               <span className="flex-1 min-w-0 text-left">
-                <b className="block text-[13.5px]">{t("Start working with Coworker")}</b>
+                <b className="block text-[13.5px]">Start working with Coworker</b>
                 <span className="text-[12px] text-muted">
-                  {t(
-                    "Open a session and just ask — analyze files, draft, research, build.",
-                  )}
+                  Open a session and just ask — analyze files, draft, research, build.
                 </span>
               </span>
               <span className="text-faint self-center">›</span>
@@ -376,7 +362,7 @@ export function Onboarding({ onDone }: { onDone: (next?: "work" | "gallery" | "a
                 (owner call 2026-07-12); the finish("gallery") plumbing remains for their return. */}
 
             <p className="text-[11px] text-faint text-center mt-auto pt-5">
-              {t("Replay this setup anytime: Settings ▸ Appearance ▸ Run setup again.")}
+              Replay this setup anytime: Settings ▸ Appearance ▸ Run setup again.
             </p>
           </section>
         )}
