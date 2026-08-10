@@ -92,7 +92,6 @@ interface Props {
 }
 
 export function Composer(props: Props) {
-  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   // "/" force-run (SKILLS-SPEC §4.1 #3). The popup derives from the draft: it is open while
@@ -535,15 +534,17 @@ export function Composer(props: Props) {
               <Icon name="plus" size={17} />
             </button>
             {attachMenuOpen && (
-              <div className="fixed inset-0 z-30" onClick={() => setAttachMenuOpen(false)} />
-              <div className="absolute z-40 bottom-full mb-1 left-0 min-w-[180px] rounded-xl border border-line bg-panel shadow-2xl py-1.5">
-                {attachItem("image", "Photo or image", () => pickFiles("image/*"))}
-                {attachItem("file", "PDF", () => pickFiles("application/pdf,.pdf"))}
-                {attachItem(
-                  "fileCode",
-                  "Other files",
-                  () => pickFiles("text/*,.md,.csv,.json,.yaml,.yml,.log,.py,.ts,.tsx,.js,.rs,.go,.toml"),
-                )}
+              <div>
+                <div className="fixed inset-0 z-30" onClick={() => setAttachMenuOpen(false)} />
+                <div className="absolute z-40 bottom-full mb-1 left-0 min-w-[180px] rounded-xl border border-line bg-panel shadow-2xl py-1.5">
+                  {attachItem("image", "Photo or image", () => pickFiles("image/*"))}
+                  {attachItem("file", "PDF", () => pickFiles("application/pdf,.pdf"))}
+                  {attachItem(
+                    "fileCode",
+                    "Other files",
+                    () => pickFiles("text/*,.md,.csv,.json,.yaml,.yml,.log,.py,.ts,.tsx,.js,.rs,.go,.toml"),
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -200,7 +200,7 @@ function StepRow({ tool, approval }: { tool: ToolItem; approval?: ApprovalItem }
               : humanizeTool(tool.name, tool.args)
           }
         />
-        {approval && approvalChip(approval.resolved)}
+        {approval && approvalChip(t, approval.resolved)}
         {!!tool.standingRule && (
           <span
             className="text-[10.5px] px-1.5 rounded-full bg-tealSoft text-tealInk shrink-0"
@@ -365,6 +365,7 @@ export function retryAnchor(items: Item[]): number {
 }
 
 export function Transcript({ items, running, streamingText, onRetry, onUndoMemory }: Props) {
+  const { t } = useTranslation();
   // §33 grouping: a turn = the maximal run of assistant/tool/resolved-approval items between
   // breakers (user, connector, notices, plan/dir requests…). Trailing assistant texts are the
   // ANSWER and render as bubbles after the group; interior assistant texts are narration and

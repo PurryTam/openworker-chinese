@@ -3,7 +3,6 @@ import type { InboxItem } from "../api";
 import type { QuestionOption } from "../types";
 import { humanizeApprovalTitle } from "../humanize";
 import {
-  approvalActionLabels,
   PreviewBlock,
   SaveSkillPreview,
   scopeNote,
@@ -300,17 +299,6 @@ export function InboxItemCard({
   chip?: ReactNode; // optional "go to session" affordance (shown in the Inbox list, not inline)
   compact?: boolean;
 }) {
-export function InboxItemCard({
-  item,
-  onResolve,
-  chip,
-  compact,
-}: {
-  item: InboxItem;
-  onResolve: (id: string, resolution: string) => void;
-  chip?: ReactNode; // optional "go to session" affordance (shown in the Inbox list, not inline)
-  compact?: boolean;
-}) {
   const { t } = useTranslation();
   const isQuestion = item.kind === "question";
 
@@ -423,7 +411,7 @@ export function InboxItemCard({
       ) : (
         <div className="flex items-center gap-2 mt-2.5">
           <button className={BTN_BORDERED} onClick={() => onResolve(item.id, "seen")}>
-            {t("Dismiss")}
+            Dismiss
           </button>
         </div>
       ) }
