@@ -31,10 +31,12 @@ dependencies = [
     # ships its own libpdfium — NOT PyMuPDF, whose AGPL license can't ride in the DMG).
     "pypdf>=5",
     "pypdfium2>=4",
-    # IANA tz database for zoneinfo. Windows ships no system tz db; Linux may lack it in minimal
+# IANA tz database for zoneinfo. Windows ships no system tz db; Linux may lack it in minimal
     # containers. Without this, every named schedule timezone (UTC, Asia/Kolkata, …) silently falls
     # back to local time.
-        "tzdata; sys_platform == 'win32' or sys_platform == 'linux'",
+    "tzdata; sys_platform == 'win32' or sys_platform == 'linux'",
+    # tomllib landed in the 3.11 stdlib; on the 3.10 floor config.py falls back to tomli.
+    "tomli>=2; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
