@@ -30,7 +30,7 @@ test("routine write → compact row: humanized title, inline preview, Allow reso
 
   await page.screenshot({ path: "test-results/ux018-compact-row.png", fullPage: false });
 
-  await row.getByRole("button", { name: "Allow", exact: true }).click();
+  await row.getByRole("button", { name: "Allow once", exact: true }).click();
   await expect(page.getByText(/Done via write_file/)).toBeVisible();
 });
 
