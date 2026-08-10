@@ -3,6 +3,7 @@ import type { InboxItem } from "../api";
 import type { QuestionOption } from "../types";
 import { humanizeApprovalTitle } from "../humanize";
 import {
+  approvalActionLabels,
   PreviewBlock,
   SaveSkillPreview,
   scopeNote,
@@ -348,7 +349,9 @@ export function InboxItemCard({
             className={item.data?.tool ? BTN_ACCENT : BTN_PRIMARY}
             onClick={() => onResolve(item.id, "allow")}
           >
-            {item.data?.tool ? t("Allow once") : t("Approve")}
+            {item.data?.tool
+              ? approvalActionLabels(item.data.tool).allow
+              : t("Approve")}
           </button>
           {/* Task-persistent standing grant (§25) — present only when the approval was
               raised inside an automation run AND the call can carry a tool+target rule.
@@ -369,7 +372,9 @@ export function InboxItemCard({
             className={item.data?.tool ? BTN_QUIET : BTN_BORDERED}
             onClick={() => onResolve(item.id, "deny")}
           >
-            {item.data?.tool ? t("Deny") : t("Deny")}
+            {item.data?.tool
+              ? approvalActionLabels(item.data.tool).deny
+              : t("Deny")}
           </button>
         </div>
       ) : isQuestion ? (
